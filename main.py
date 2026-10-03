@@ -1,17 +1,12 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
-import pypdf
-import io
-import re
+import pypdf, io, re
 
 app = FastAPI()
 
-def extract_text_from_pdf(file_bytes):
-    pdf_reader = pypdf.PdfReader(io.BytesIO(file_bytes))
-    text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text() or ""
-    return text
+def extract_text_from_pdf(b):
+    pdf_reader = pypdf.PdfReader(io.BytesIO(b))
+    return "".join([page.extract_text() or "" for page in pdf_reader.pages])
 
 def fix_spelling(text):
     rep = {"experiance": "Experience", "managment": "Management", "engeneering": "Engineering", "autocad": "AutoCAD", "python": "Python", "java": "Java"}
@@ -20,156 +15,143 @@ def fix_spelling(text):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item():
-    html_content = """
+    return HTMLResponse(content="""
     <!DOCTYPE html>
     <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
-    </head>
+    <head><meta charset="UTF-8"><title>AI Resume Parser & Optimizer</title><script src="https://tailwindcss.com"></script></head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div class="max-w-4xl mx-auto py-12 px-4">
             <header class="text-center mb-12">
                 <h1 class="text-5xl font-black text-white mb-3">AI Resume Parser & Optimizer</h1>
-                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready documents instantly.</p>
+                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready PDF resumes instantly.</p>
             </header>
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-slate-800/80 mb-8">
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-300 mb-2">1. Upload Candidate Resume (PDF)</label>
-                        <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-300 mb-2">2. Paste Custom Job Description (JD)</label>
-                        <textarea name="jd" rows="5" required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea>
-                    </div>
+                    <div><label class="block text-sm font-semibold text-slate-300 mb-2">1. Upload Candidate Resume (PDF)</label><input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white cursor-pointer"></div>
+                    <div><label class="block text-sm font-semibold text-slate-300 mb-2">2. Paste Custom Job Description (JD)</label><textarea name="jd" rows="5" required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea></div>
                     <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase">Calculate Compatibility Match</button>
                 </form>
             </div>
         </div>
     </body>
     </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+    """, status_code=200)
 
 @app.post("/upload-resume/", response_class=HTMLResponse)
 async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     contents = await resume.read()
-    orig_pdf_reader = pypdf.PdfReader(io.BytesIO(contents))
-    
-    # Flawless dynamic page copy system to retain original pristine format
-    output_writer = pypdf.PdfWriter()
-    for page in orig_pdf_reader.pages:
-        output_writer.add_page(page)
-        
-    resume_text = ""
-    for page in orig_pdf_reader.pages:
-        resume_text += page.extract_text() or ""
-        
-    clean_text = fix_spelling(resume_text)
-
-    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', clean_text)
-    phone_match = re.search(r'\+?\d[\d -]{8,12}\d', clean_text)
-    email = email_match.group(0) if email_match else "Not Extracted"
-    phone = phone_match.group(0) if phone_match else "Not Extracted"
-
-    jd_words = set(re.findall(r'\b\w+\b', jd.lower()))
-    resume_words = set(re.findall(r'\b\w+\b', clean_text.lower()))
-
-    stop_words = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are', 'your'}
-    important_jd_keywords = {word for word in jd_words if len(word) > 2 and word not in stop_words}
-
-    matched_skills = important_jd_keywords.intersection(resume_words)
-    missing_skills = important_jd_keywords.difference(resume_words)
-
-    match_percentage = int((len(matched_skills) / len(important_jd_keywords)) * 100) if important_jd_keywords else 0
-    matched_str = ", ".join([w.upper() for w in list(matched_skills)[:10]]) if matched_skills else "None Detected"
-    missing_str = ", ".join([w.upper() for w in list(missing_skills)[:8]]) if missing_skills else "None"
-
-    # Filter out civil/mechanical tools to keep it clean for CSE/IT profiles
-    allowed_tech_keywords = {'python', 'java', 'javascript', 'react', 'node', 'sql', 'html', 'css', 'aws', 'git', 'github'}
-    valid_skills = [s for s in missing_skills if s.lower() in allowed_tech_keywords]
-
-    hidden_input_bullets = []
-    ai_rewrite_list = []
+    txt = fix_spelling(extract_text_from_pdf(contents))
+    j_w, r_w = set(re.findall(r'\b\w+\b', jd.lower())), set(re.findall(r'\b\w+\b', txt.lower()))
+    stop = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are', 'your'}
+    imp = {w for w in j_w if len(w) > 2 and w not in stop}
+    match, miss = imp.intersection(r_w), imp.difference(r_w)
+    pct = int((len(match) / len(imp)) * 100) if imp else 0
+    m_str, ms_str = ", ".join(list(match)[:10]).upper(), ", ".join(list(miss)[:8]).upper()
+    allowed = {'python', 'java', 'javascript', 'react', 'node', 'sql', 'html', 'css', 'aws', 'git', 'github'}
+    valid_skills = [s for s in miss if s.lower() in allowed]
+    hd_blt, rw_list = [], []
     if valid_skills:
-        for skill in valid_skills[:3]:
-            bullet = f"Utilized {skill.upper()} core architectures to optimize dynamic views and maximize responsive web database application execution pipelines."
-            hidden_input_bullets.append(bullet)
-            ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"{bullet}\\\"</p></div>")
+        for s in valid_skills[:3]:
+            bullet = f"Utilized {s.upper()} core architectures to optimize dynamic frontend views and maximize responsive web database application execution pipelines."
+            hd_blt.append(bullet)
+            rw_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {s.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"{bullet}\\\"</p></div>")
     else:
-        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
-    
-    ai_rewrite_str = "".join(ai_rewrite_list)
-    bullets_payload = "\\n".join(hidden_input_bullets) if hidden_input_bullets else "EMPTY"
-
-    html_content = f"""
+        rw_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
+    rw_str, blt_payload = "".join(rw_list), "|||".join(hd_blt)
+    if not blt_payload.strip():
+        blt_payload = "EMPTY_DATA"
+    return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
-    </head>
+    <head><meta charset="UTF-8"><title>AI Resume Parser & Optimizer</title><script src="https://tailwindcss.com"></script></head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
-            <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 mb-8">
-                <h2 class="text-xl font-bold text-blue-400 mb-4">⚡ Extraction Intelligence</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-light">
-                    <div><span class="text-slate-500 font-medium">Candidate Profile:</span> <span class="text-white font-semibold">Sainath (CSE Team)</span></div>
-                    <div><span class="text-slate-500 font-medium">Email:</span> <span class="text-slate-300">{email}</span></div>
-                    <div><span class="text-slate-500 font-medium">Phone:</span> <span class="text-slate-300">{phone}</span></div>
-                </div>
-            </div>
-
-            <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl relative mb-8">
+            <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-                    <h2 class="text-2xl font-bold text-white tracking-wide">📊 ATS Compatibility Audit Summary</h2>
+                    <h2 class="text-2xl font-bold text-white">📊 ATS Compatibility Audit Summary</h2>
                     <form action="/download-perfect-resume-pdf/" method="post">
-                        <input type="hidden" name="orig_text" value="{clean_text.replace('"', '&quot;')}">
-                        <input type="hidden" name="bullets" value="{bullets_payload.replace('"', '&quot;')}">
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">
-                            🤖 Auto-Inject & Download Perfect PDF Resume
-                        </button>
+                        <input type="hidden" name="orig_text" value="{txt.replace('"', '&quot;')}">
+                        <input type="hidden" name="bullets" value="{blt_payload.replace('"', '&quot;')}">
+                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase shadow-md hover:bg-purple-500 transition-colors">🤖 Auto-Inject & Download Perfect PDF Resume</button>
                     </form>
                 </div>
-
-                <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl border border-slate-800/50">
-                    <div class="text-5xl font-black text-green-400 bg-slate-900 px-6 py-4 rounded-xl border border-green-500/30">{match_percentage}%</div>
-                    <div>
-                        <p class="text-md text-slate-200 font-medium">Overall ATS Compatibility Score</p>
-                    </div>
+                <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl">
+                    <div class="text-5xl font-black text-green-400 bg-slate-900 px-6 py-4 rounded-xl">{pct}%</div>
+                    <div><p class="text-md text-slate-200 font-medium">Overall ATS Compatibility Score</p></div>
                 </div>
-                
                 <div class="space-y-5 mb-8">
-                    <div>
-                        <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider">✔️ Matched Keywords:</h3>
-                        <div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 border border-slate-800 font-mono tracking-wide">{matched_str}</div>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-red-400 uppercase tracking-wider">❌ Missing Keywords:</h3>
-                        <div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 border border-slate-800 font-mono tracking-wide">{missing_str}</div>
-                    </div>
+                    <div><h3 class="text-sm font-semibold text-green-400 uppercase">✔️ Matched Keywords:</h3><div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 font-mono">{m_str}</div></div>
+                    <div><h3 class="text-sm font-semibold text-red-400 uppercase">❌ Missing Keywords:</h3><div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 font-mono">{ms_str}</div></div>
                 </div>
-
-                <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-2xl mt-6">
-                    <h3 class="text-md font-bold text-purple-400 mb-2">🤖 Smart AI Resume Rewriter</h3>
-                    <p class="text-xs text-slate-400 mb-4">These lines will be cleanly embedded inside the downloaded PDF layout below:</p>
-                    <div class="space-y-3">
-                        {ai_rewrite_str}
-                    </div>
-                </div>
+                <div class="bg-purple-950/30 p-6 rounded-2xl mt-6"><h3 class="text-md font-bold text-purple-400 mb-2">🤖 Smart AI Resume Rewriter</h3><div class="space-y-3">{rw_str}</div></div>
             </div>
-            <p class="text-center"><a href="/" class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors underline underline-offset-4">← Go Back and Scan Another Profile</a></p>
         </div>
     </body>
     </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+    """, status_code=200)
 
 @app.post("/download-perfect-resume-pdf/")
 async def download_pdf_resume(orig_text: str = Form(...), bullets: str = Form(...)):
-    # Stream the absolute cleanest text structure packaged as an encrypted document
-    pdf_buffer = io.BytesIO()
+    # Standard Python Canvas engine to generate pure professional PDF documents natively
+    output_writer = pypdf.PdfWriter()
+    packet = io.BytesIO()
     
+    # Use standard library canvas drawing cleanly
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.colors import HexColor
+    
+    c = canvas.Canvas(packet, pagesize=letter)
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColor(HexColor('#1e3a8a'))
+    c.drawString(54, 745, "PROFESSIONAL ENGINEERING CURRICULUM VITAE")
+    c.setStrokeColor(HexColor('#94a3b8'))
+    c.line(54, 730, 558, 730)
+    
+    y = 705
+    c.setFont("Helvetica", 10)
+    c.setFillColor(HexColor('#334155'))
+    
+    for line in orig_text.split("\n"):
+        if line.strip():
+            if y < 60:
+                c.showPage()
+                y = 745
+                c.setFont("Helvetica", 10)
+            c.drawString(54, y, line.strip()[:95])
+            y -= 16
+            
+    if bullets.strip() and bullets != "EMPTY_DATA":
+        y -= 20
+        if y < 120:
+            c.showPage()
+            y = 745
+        c.setStrokeColor(HexColor('#3b82f6'))
+        c.line(54, y+12, 558, y+12)
+        c.setFont("Helvetica-Bold", 12)
+        c.setFillColor(HexColor('#2563eb'))
+        c.drawString(54, y, "PROFESSIONAL COMPETENCIES & TECHNICAL ENHANCEMENTS")
+        y -= 22
+        c.setFont("Helvetica", 10)
+        c.setFillColor(HexColor('#1e293b'))
+        for b in bullets.split("|||"):
+            if b.strip():
+                if y < 50:
+                    c.showPage()
+                    y = 745
+                    c.setFont("Helvetica", 10)
+                c.drawString(54, y, f"• {b.strip()[:90]}")
+                y -= 18
+                
+    c.showPage()
+    c.save()
+    packet.seek(0)
+    
+    new_pdf = pypdf.PdfReader(packet)
+    output_writer.add_page(new_pdf.pages[0])
+    
+    response_stream = io.BytesIO()
+    output_writer.write(response_stream)
+    response_stream.seek(0)
+    
+    return StreamingResponse(response_stream, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.pdf"})
