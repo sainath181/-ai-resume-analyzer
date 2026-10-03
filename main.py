@@ -23,7 +23,7 @@ async def read_item():
         <div class="max-w-4xl mx-auto py-12 px-4">
             <header class="text-center mb-12">
                 <h1 class="text-5xl font-black text-white mb-3">AI Resume Parser & Optimizer</h1>
-                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready PDF resumes instantly.</p>
+                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready resumes instantly.</p>
             </header>
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-slate-800/80 mb-8">
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
@@ -69,10 +69,10 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white">📊 ATS Compatibility Audit Summary</h2>
-                    <form action="/download-perfect-resume-pdf/" method="post">
+                    <form action="/download-perfect-resume-doc/" method="post">
                         <input type="hidden" name="orig_text" value="{txt.replace('"', '&quot;')}">
                         <input type="hidden" name="bullets" value="{blt_payload.replace('"', '&quot;')}">
-                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase shadow-md hover:bg-purple-500 transition-colors">🤖 Auto-Inject & Download Perfect PDF Resume</button>
+                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase shadow-md hover:bg-purple-500 transition-colors">🤖 Auto-Inject & Download Perfect Executive Resume</button>
                     </form>
                 </div>
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl">
@@ -90,68 +90,46 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     </html>
     """, status_code=200)
 
-@app.post("/download-perfect-resume-pdf/")
-async def download_pdf_resume(orig_text: str = Form(...), bullets: str = Form(...)):
-    # Standard Python Canvas engine to generate pure professional PDF documents natively
-    output_writer = pypdf.PdfWriter()
-    packet = io.BytesIO()
-    
-    # Use standard library canvas drawing cleanly
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.colors import HexColor
-    
-    c = canvas.Canvas(packet, pagesize=letter)
-    c.setFont("Helvetica-Bold", 16)
-    c.setFillColor(HexColor('#1e3a8a'))
-    c.drawString(54, 745, "PROFESSIONAL ENGINEERING CURRICULUM VITAE")
-    c.setStrokeColor(HexColor('#94a3b8'))
-    c.line(54, 730, 558, 730)
-    
-    y = 705
-    c.setFont("Helvetica", 10)
-    c.setFillColor(HexColor('#334155'))
-    
-    for line in orig_text.split("\n"):
-        if line.strip():
-            if y < 60:
-                c.showPage()
-                y = 745
-                c.setFont("Helvetica", 10)
-            c.drawString(54, y, line.strip()[:95])
-            y -= 16
+@app.post("/download-perfect-resume-doc/")
+async def download_doc_resume(orig_text: str = Form(...), bullets: str = Form(...)):
+    # Flawless Executive Web-Document Stream Engine without ReportLab dependencies
+    formatted_html = f\"\"\"
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Professional Resume</title>
+        <script src="https://tailwindcss.com"></script>
+        <style>@media print {{ body {{ bg-white; text-black; }} .no-print {{ display: none; }} }}</style>
+    </head>
+    <body class="bg-slate-50 text-slate-900 p-8 font-sans">
+        <div class="max-w-3xl mx-auto bg-white p-12 rounded-xl shadow-md border border-slate-200">
+            <div class="text-center no-print mb-6">
+                <button onclick="window.print()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow hover:bg-blue-700">💾 Click Here to Save as Perfect PDF</button>
+                <p class="text-xs text-slate-500 mt-2">Alignment and formatting fixed automatically by AI Suite.</p>
+            </div>
             
+            <div class="border-b-4 border-blue-900 pb-4 mb-6">
+                <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">PROFESSIONAL ENGINEERING RESUME</h1>
+            </div>
+            
+            <div class="space-y-4 text-sm leading-relaxed whitespace-pre-line text-slate-700">
+                {orig_text}
+            </div>
+    \"\"\"
+    
     if bullets.strip() and bullets != "EMPTY_DATA":
-        y -= 20
-        if y < 120:
-            c.showPage()
-            y = 745
-        c.setStrokeColor(HexColor('#3b82f6'))
-        c.line(54, y+12, 558, y+12)
-        c.setFont("Helvetica-Bold", 12)
-        c.setFillColor(HexColor('#2563eb'))
-        c.drawString(54, y, "PROFESSIONAL COMPETENCIES & TECHNICAL ENHANCEMENTS")
-        y -= 22
-        c.setFont("Helvetica", 10)
-        c.setFillColor(HexColor('#1e293b'))
+        formatted_html += f\"\"\"
+            <div class="mt-8 border-t-2 border-blue-500 pt-4">
+                <h3 class="text-lg font-bold text-blue-800 uppercase mb-3">AI OPTIMIZED ATS TECHNICAL EXPERIENCES</h3>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-800 font-medium">
+        \"\"\"
         for b in bullets.split("|||"):
             if b.strip():
-                if y < 50:
-                    c.showPage()
-                    y = 745
-                    c.setFont("Helvetica", 10)
-                c.drawString(54, y, f"• {b.strip()[:90]}")
-                y -= 18
-                
-    c.showPage()
-    c.save()
-    packet.seek(0)
+                formatted_html += f"<li class='mb-1'>{b.strip()}</li>"
+        formatted_html += "</ul></div>"
+        
+    formatted_html += "</div></body></html>"
     
-    new_pdf = pypdf.PdfReader(packet)
-    output_writer.add_page(new_pdf.pages[0])
-    
-    response_stream = io.BytesIO()
-    output_writer.write(response_stream)
-    response_stream.seek(0)
-    
-    return StreamingResponse(response_stream, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.pdf"})
+    file_stream = io.BytesIO(formatted_html.encode("utf-8"))
+    return StreamingResponse(file_stream, media_type="text/html", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.html"})
