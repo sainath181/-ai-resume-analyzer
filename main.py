@@ -22,7 +22,7 @@ async def read_item():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans selection:bg-blue-500 selection:text-white">
         <div class="max-w-4xl mx-auto py-12 px-4 relative">
@@ -49,15 +49,15 @@ async def read_item():
 
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
                     <div class="group">
-                        <label class="block text-sm font-semibold text-slate-300 mb-2 group-hover:text-blue-400 transition-colors">1. Upload Candidate Resume (PDF)</label>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2">1. Upload Candidate Resume (PDF)</label>
                         <div class="relative bg-slate-950 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-all">
                             <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer">
                         </div>
                     </div>
 
                     <div class="group">
-                        <label class="block text-sm font-semibold text-slate-300 mb-2 group-hover:text-blue-400 transition-colors">2. Paste Custom Job Description (JD)</label>
-                        <textarea name="jd" rows="5" placeholder="Paste target requirements or specialized technology keywords here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 placeholder:text-slate-600 font-light resize-none transition-all"></textarea>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2">2. Paste Custom Job Description (JD)</label>
+                        <textarea name="jd" rows="5" placeholder="Paste target requirements here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 placeholder:text-slate-600 font-light resize-none transition-all"></textarea>
                     </div>
 
                     <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl transition duration-300 shadow-lg shadow-blue-500/20 text-md tracking-wide uppercase">
@@ -109,7 +109,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     <head>
         <meta charset="UTF-8">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
@@ -132,9 +132,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                 </div>
 
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl border border-slate-800/50">
-                    <div class="text-5xl font-black text-green-400 bg-slate-900 px-6 py-4 rounded-xl border border-green-500/30">
-                        {match_percentage}%
-                    </div>
+                    <div class="text-5xl font-black text-green-400 bg-slate-900 px-6 py-4 rounded-xl border border-green-500/30">{match_percentage}%</div>
                     <div>
                         <p class="text-md text-slate-200 font-medium">Overall ATS Compatibility Score</p>
                         <p class="text-xs text-slate-500 font-light mt-0.5">Calculated dynamically based on real-time linguistic vector parsing.</p>
@@ -152,3 +150,5 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                     </div>
                 </div>
 
+                <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-2xl mt-6">
+                    <h3 class="text-md font-bold text-purple-400 mb-2 flex items-center gap-2">🤖 Smart AI Resume Rewriter</h3>
