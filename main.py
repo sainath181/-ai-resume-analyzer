@@ -1,15 +1,17 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
-import pypdf, io, re
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
+import pypdf
+import io
+import re
 
 app = FastAPI()
 
-def extract_text_from_pdf(b):
-    r = pypdf.PdfReader(io.BytesIO(b))
-    return "".join([p.extract_text() or "" for p in r.pages])
+def extract_text_from_pdf(file_bytes):
+    pdf_reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text() or ""
+    return text
 
 def fix_text(t):
     rep = {"autocad": "AutoCAD", "python": "Python", "java": "Java", "plc": "PLC Systems"}
@@ -18,7 +20,7 @@ def fix_text(t):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item():
-    return HTMLResponse(content="""
+    html_content = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -46,7 +48,8 @@ async def read_item():
         </div>
     </body>
     </html>
-    """, status_code=200)
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 @app.post("/upload-resume/", response_class=HTMLResponse)
 async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
@@ -66,7 +69,11 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
             rw_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold uppercase mb-1.5'>🔧 Bullet Point for {s.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"{bullet}\\\"</p></div>")
     else:
         rw_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match!</p>")
-    rw_str, blt_payload = "".join(rw_list), "|||".join(hd_blt)
+    rw_str, blt_payload = "".join(rw_list), "\\n".join(hd_blt)
+    
+    appended_enhancements = "\\n\\n--- AI OPTIMIZED EXPERIENCE ENHANCEMENTS ---\\n" + blt_payload if hd_blt else ""
+    full_optimized_text = txt + appended_enhancements
+
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -77,9 +84,8 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white">📊 ATS Compatibility Audit Summary</h2>
                     <form action="/download-perfect-resume/" method="post">
-                        <input type="hidden" name="orig_text" value="{txt.replace('"', '&quot;')}">
-                        <input type="hidden" name="bullets" value="{blt_payload.replace('"', '&quot;')}">
-                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase">🤖 Generate Perfect Resume & Download PDF</button>
+                        <input type="hidden" name="payload" value="{full_optimized_text.replace('"', '&quot;')}">
+                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase">🤖 Auto-Inject & Download Updated Document</button>
                     </form>
                 </div>
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl">
@@ -101,43 +107,6 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     """, status_code=200)
 
 @app.post("/download-perfect-resume/")
-async def download_perfect_resume(orig_text: str = Form(...), bullets: str = Form(...)):
-    buffer = io.BytesIO()
-    from reportlab.lib.colors import HexColor
-    c = canvas.Canvas(buffer, pagesize=letter)
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColor(HexColor('#1e3a8a'))
-    c.drawString(54, 745, "PROFESSIONAL ENGINEERING CURRICULUM VITAE")
-    c.setStrokeColor(HexColor('#94a3b8'))
-    c.line(54, 730, 558, 730)
-    y = 705
-    c.setFont("Helvetica", 10)
-    c.setFillColor(HexColor('#334155'))
-    for line in orig_text.split("\n"):
-        if line.strip():
-            if y < 60:
-                c.showPage()
-                y = 745
-                c.setFont("Helvetica", 10)
-            c.drawString(54, y, line.strip()[:95])
-            y -= 16
-    if bullets.strip():
-        y -= 20
-        if y < 120: c.showPage(); y = 745
-        c.setStrokeColor(HexColor('#3b82f6'))
-        c.line(54, y+12, 558, y+12)
-        c.setFont("Helvetica-Bold", 11)
-        c.setFillColor(HexColor('#2563eb'))
-        c.drawString(54, y, "PROFESSIONAL COMPETENCIES & TECHNICAL ENHANCEMENTS")
-        y -= 22
-        c.setFont("Helvetica", 10)
-        c.setFillColor(HexColor('#1e293b'))
-        for b in bullets.split("|||"):
-            if b.strip():
-                if y < 50: c.showPage(); y = 745; c.setFont("Helvetica", 10)
-                c.drawString(54, y, f"• {b.strip()[:90]}")
-                y -= 18
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.pdf"})
+async def download_doc(payload: str = Form(...)):
+    file_stream = io.BytesIO(payload.encode("utf-8"))
+    return StreamingResponse(file_stream, media_type="text/plain", headers={"Content-Disposition": "attachment; filename=Optimized_AI_Resume.txt"})
