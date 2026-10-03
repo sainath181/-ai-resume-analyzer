@@ -42,11 +42,14 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     imp = {w for w in j_w if w in all_b or (len(w) > 2 and w not in stop)}
     match = imp.intersection(r_w)
     miss = imp.difference(r_w)
-    valid_miss = [s.upper() for s in miss if s.lower() in all_b]
+    
+    # AI Dynamic Title Case Adjuster to perfectly match adjacent text look like "C, Java"
+    valid_miss = [s.title() if s.lower() != 'sql' and s.lower() != 'plc' else s.upper() for s in miss if s.lower() in all_b]
     inj_str = ", ".join(valid_miss[:3]) if valid_miss else ""
+    
     pct = int(((len(match) + len(valid_miss[:3])) / len(imp)) * 100) if imp else 100
     if pct > 100: pct = 100
-    m_str = ", ".join(list(match)[:10]).upper() if match else "NONE"
+    m_str = ", ".join(list(match)[:10]).title() if match else "NONE"
     blt_payload = "|||".join(valid_miss[:3]) if valid_miss else "EMPTY"
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
