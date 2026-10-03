@@ -108,13 +108,8 @@ async def download_pdf_resume(orig_text: str = Form(...), bullets: str = Form(..
     for line in orig_text.split("\n"):
         if line.strip():
             if y < 60: c.showPage(); y = 745; c.setFont("Helvetica", 10)
-            words = line.strip().split(" ")
-            curr = ""
-            for w in words:
-                test = curr + " " + w if curr else w
-                if c.stringWidth(test, "Helvetica", 10) < 504: curr = test
-                else: c.drawString(54, y, curr); y -= 16; curr = w
-            c.drawString(54, y, curr); y -= 16
+            c.drawString(54, y, line.strip()[:95])
+            y -= 16
     if bullets.strip() and bullets != "EMPTY_DATA":
         y -= 20
         if y < 120: c.showPage(); y = 745
