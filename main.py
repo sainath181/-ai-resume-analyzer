@@ -22,7 +22,7 @@ async def read_item():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans selection:bg-blue-500 selection:text-white">
         <div class="max-w-4xl mx-auto py-12 px-4 relative">
@@ -97,9 +97,9 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     ai_rewrite_list = []
     if missing_skills:
         for skill in list(missing_skills)[:3]:
-            ai_rewrite_list.append(f"<div class='bg-slate-950 p-3 rounded-lg border border-purple-500/20'><p class='text-xs text-purple-400 font-semibold mb-1'>🔧 Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"Utilized <b class='text-blue-400'>{skill.upper()}</b> frameworks to optimize system performance metrics and streamline core backend execution pipelines.\\\"</p></div>")
+            ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold tracking-wide uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light leading-relaxed'>\\\"Leveraged <b class='text-blue-400 font-semibold'>{skill.upper()}</b> technologies and analytical framework layouts to optimize core production system configurations and streamline data pipelines.\\\"</p></div>")
     else:
-        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect! No rewrites needed. Your current profile lines successfully align with all target parameters.</p>")
+        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required for this target profile state.</p>")
     
     ai_rewrite_str = "".join(ai_rewrite_list)
 
@@ -109,7 +109,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     <head>
         <meta charset="UTF-8">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
@@ -152,4 +152,3 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                     </div>
                 </div>
 
-                <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-xl">
