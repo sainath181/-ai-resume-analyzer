@@ -37,7 +37,7 @@ async def read_item():
                     AI Resume Parser & Optimizer
                 </h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto font-light">
-                    Scan profiles and optimize engineering resumes against target job descriptions dynamically.
+                    Scan profiles and optimize engineering resumes against target job descriptions dynamically with AI Rewriter.
                 </p>
             </header>
 
@@ -84,7 +84,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     jd_words = set(re.findall(r'\b\w+\b', jd.lower()))
     resume_words = set(re.findall(r'\b\w+\b', resume_text.lower()))
 
-    stop_words = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are'}
+    stop_words = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are', 'your', 'with'}
     important_jd_keywords = {word for word in jd_words if len(word) > 2 and word not in stop_words}
 
     matched_skills = important_jd_keywords.intersection(resume_words)
@@ -93,6 +93,16 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     match_percentage = int((len(matched_skills) / len(important_jd_keywords)) * 100) if important_jd_keywords else 0
     matched_str = ", ".join(list(matched_skills)[:10]) if matched_skills else "None Detected"
     missing_str = ", ".join(list(missing_skills)[:8]) if missing_skills else "None"
+
+    # AI Smart Rewriter Line Generator
+    ai_rewrite_list = []
+    if missing_skills:
+        for skill in list(missing_skills)[:3]:
+            ai_rewrite_list.append(f"<div class='bg-slate-950 p-3 rounded-lg border border-purple-500/20'><p class='text-xs text-purple-400 font-semibold mb-1'>🔧 Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"Utilized <b class='text-blue-400'>{skill.upper()}</b> frameworks to optimize system performance metrics and streamline core backend execution pipelines.\\\"</p></div>")
+    else:
+        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect! No rewrites needed. Your current profile lines successfully align with all target parameters.</p>")
+    
+    ai_rewrite_str = "".join(ai_rewrite_list)
 
     html_content = f"""
     <!DOCTYPE html>
@@ -132,7 +142,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                     </div>
                 </div>
                 
-                <div class="space-y-5">
+                <div class="space-y-5 mb-8">
                     <div>
                         <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider">✔️ Matched Technical Keywords:</h3>
                         <div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 border border-slate-800 font-mono tracking-wide">{matched_str}</div>
@@ -142,10 +152,5 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                         <div class="text-slate-300 text-sm bg-slate-950/80 p-4 rounded-xl mt-2 border border-slate-800 font-mono tracking-wide">{missing_str}</div>
                     </div>
                 </div>
-            </div>
-            <p class="text-center"><a href="/" class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors underline underline-offset-4">← Go Back and Scan Another Profile</a></p>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+
+                <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-xl">
