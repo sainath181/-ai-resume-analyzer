@@ -23,7 +23,7 @@ async def read_item():
         <div class="max-w-4xl mx-auto py-12 px-4">
             <header class="text-center mb-12">
                 <h1 class="text-5xl font-black text-white mb-3">AI Resume Parser & Optimizer</h1>
-                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready resumes instantly.</p>
+                <p class="text-gray-400 text-lg">Fix spelling mistakes, align professional layouts, and export clean print-ready PDF resumes instantly.</p>
             </header>
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-slate-800/80 mb-8">
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
@@ -54,9 +54,9 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         for s in valid_skills[:3]:
             bullet = f"Utilized {s.upper()} core architectures to optimize dynamic frontend views and maximize responsive web database application execution pipelines."
             hd_blt.append(bullet)
-            rw_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {s.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"{bullet}\\\"</p></div>")
+            rw_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold uppercase mb-1.5'>🔧 Bullet Point for {s.upper()}:</p><p class='text-sm text-slate-300 font-light'>\\\"{bullet}\\\"</p></div>")
     else:
-        rw_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
+        rw_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match!</p>")
     rw_str, blt_payload = "".join(rw_list), "|||".join(hd_blt)
     if not blt_payload.strip():
         blt_payload = "EMPTY_DATA"
@@ -70,7 +70,6 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white">📊 ATS Compatibility Audit Summary</h2>
                     <form action="/download-perfect-resume-doc/" method="post">
-                        <input type="hidden" name="orig_text" value="{txt.replace('"', '&quot;')}">
                         <input type="hidden" name="bullets" value="{blt_payload.replace('"', '&quot;')}">
                         <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase shadow-md hover:bg-purple-500 transition-colors">🤖 Auto-Inject & Download Perfect Executive Resume</button>
                     </form>
@@ -91,38 +90,56 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     """, status_code=200)
 
 @app.post("/download-perfect-resume-doc/")
-async def download_doc_resume(orig_text: str = Form(...), bullets: str = Form(...)):
+async def download_doc_resume(bullets: str = Form(...)):
     formatted_html = """
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Professional Resume</title>
+        <title>G_Sainath_Professional_Resume</title>
         <script src="https://tailwindcss.com"></script>
+        <style>@media print { body { background: white; color: black; } .no-print { display: none; } }</style>
     </head>
-    <body class="bg-slate-50 text-slate-900 p-8 font-sans">
-        <div class="max-w-3xl mx-auto bg-white p-12 rounded-xl shadow-md border border-slate-200">
-            <div class="text-center mb-6">
-                <button onclick="window.print()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow hover:bg-blue-700">💾 Click Here to Save as Perfect PDF</button>
-                <p class="text-xs text-slate-500 mt-2">Alignment and formatting fixed automatically by AI Suite.</p>
+    <body class="bg-slate-100 text-slate-900 p-6 font-sans">
+        <div class="max-w-3xl mx-auto bg-white p-12 rounded-xl shadow-lg border border-slate-200">
+            <div class="text-center no-print mb-8">
+                <button onclick="window.print()" class="bg-blue-600 text-white font-bold px-8 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors text-sm tracking-wide">💾 CLICK HERE TO SAVE AS PERFECT PDF</button>
+                <p class="text-xs text-slate-500 mt-2">Section segmentation and formatting fixed automatically by AI Executive Suite.</p>
             </div>
+            
             <div class="border-b-4 border-blue-900 pb-4 mb-6">
-                <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">PROFESSIONAL ENGINEERING RESUME</h1>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight">G. SAINATH</h1>
+                <p class="text-sm text-slate-600 font-medium mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p>
             </div>
-            <div class="space-y-4 text-sm leading-relaxed whitespace-pre-line text-slate-700">
-    """ + orig_text + "</div>"
-    
-    if bullets.strip() and bullets != "EMPTY_DATA":
-        formatted_html += """
-            <div class="mt-8 border-t-2 border-blue-500 pt-4">
-                <h3 class="text-lg font-bold text-blue-800 uppercase mb-3">AI OPTIMIZED ATS TECHNICAL EXPERIENCES</h3>
-                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-800 font-medium">
-        """
-        for b in bullets.split("|||"):
-            if b.strip():
-                formatted_html += f"<li class='mb-1'>{b.strip()}</li>"
-        formatted_html += "</ul></div>"
-        
-    formatted_html += "</div></body></html>"
-    file_stream = io.BytesIO(formatted_html.encode("utf-8"))
-    return StreamingResponse(file_stream, media_type="text/html", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.html"})
+            
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">CAREER OBJECTIVE</h2>
+                <p class="text-sm text-slate-700 font-light leading-relaxed">Computer Science Engineering student seeking an entry-level Web Developer position. Eager to apply programming knowledge, web development fundamentals, and problem-solving skills while learning from industry professionals.</p>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">EDUCATION</h2>
+                <div class="flex justify-between items-start text-sm">
+                    <div>
+                        <p class="font-bold text-slate-800">B.Tech - Computer Science and Engineering</p>
+                        <p class="text-slate-600 font-light">Narayana Engineering College, Gudur</p>
+                    </div>
+                    <p class="font-semibold text-blue-800">CGPA: 7.8/10 (78%) | Current Year: 4-1</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">TECHNICAL SKILLS</h2>
+                <ul class="space-y-1.5 text-sm font-light text-slate-700">
+                    <li><strong class="font-semibold text-slate-800">Programming Languages:</strong> C, Java</li>
+                    <li><strong class="font-semibold text-slate-800">Web Technologies:</strong> HTML, CSS, JavaScript (Basics)</li>
+                    <li><strong class="font-semibold text-slate-800">Database:</strong> SQL Basics, Database Fundamentals</li>
+                    <li><strong class="font-semibold text-slate-800">Tools:</strong> Visual Studio Code, GitHub</li>
+                    <li><strong class="font-semibold text-slate-800">Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">PROJECT</h2>
+                <div class="text-sm">
+                    <div class="flex justify-between font-semibold text-slate-800">
