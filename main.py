@@ -1,12 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse
 import pypdf
 import io
 import re
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
 
 app = FastAPI()
 
@@ -77,18 +73,19 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     matched_str = ", ".join(list(matched_skills)[:10]) if matched_skills else "None Detected"
     missing_str = ", ".join(list(missing_skills)[:8]) if missing_skills else "None"
 
-    hidden_input_bullets = []
     ai_rewrite_list = []
+    injected_text_payload = ""
     if missing_skills:
+        injected_text_payload += "\\n\\n--- AI OPTIMIZED ENHANCEMENTS ---\\n"
         for skill in list(missing_skills)[:3]:
-            bullet = f"Leveraged {skill.upper()} technologies and analytical framework layouts to optimize core production system configurations and streamline data pipelines."
-            hidden_input_bullets.append(bullet)
+            bullet = f"Leveraged {skill.upper()} technologies to optimize production configurations and streamline core backend execution pipelines."
+            injected_text_payload += f"• {bullet}\\n"
             ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold tracking-wide uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light leading-relaxed'>\\\"{bullet}\\\"</p></div>")
     else:
-        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required for this target profile state.</p>")
+        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
     
     ai_rewrite_str = "".join(ai_rewrite_list)
-    bullets_payload = "|||".join(hidden_input_bullets)
+    full_optimized_text = resume_text + injected_text_payload
 
     html_content = f"""
     <!DOCTYPE html>
@@ -112,13 +109,9 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl relative mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white tracking-wide flex items-center gap-2">📊 ATS Compatibility Audit Summary</h2>
-                    <form action="/inject-pdf/" method="post" target="_blank">
-                        <input type="hidden" name="resume_text" value="{resume_text.replace('"', '&quot;')}">
-                        <input type="hidden" name="bullets" value="{bullets_payload.replace('"', '&quot;')}">
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">
-                            🤖 Auto-Inject & Download PDF
-                        </button>
-                    </form>
+                    <button onclick="downloadTextReport()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">
+                        🤖 Auto-Inject & Download Document
+                    </button>
                 </div>
 
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl border border-slate-800/50">
@@ -141,7 +134,6 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
 
                 <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-2xl mt-6">
                     <h3 class="text-md font-bold text-purple-400 mb-2 flex items-center gap-2">🤖 Smart AI Resume Rewriter</h3>
-                    <p class="text-xs text-slate-400 mb-4">Copy and paste these optimized bullet points directly into your resume structure to clear filters:</p>
                     <div class="space-y-3">
                         {ai_rewrite_str}
                     </div>
@@ -149,14 +141,19 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
             </div>
             <p class="text-center"><a href="/" class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors underline underline-offset-4">← Go Back and Scan Another Profile</a></p>
         </div>
+
+        <script>
+            function downloadTextReport() {{
+                const text = `{full_optimized_text.replace('\n', '\\n').replace('"', '\\"')}`;
+                const blob = new Blob([text], {{ type: 'text/plain' }});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('href', url);
+                a.setAttribute('download', 'Optimized_AI_Resume.txt');
+                a.click();
+            }}
+        </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content, status_code=200)
-
-@app.post("/inject-pdf/")
-async def inject_pdf(resume_text: str = Form(...), bullets: str = Form(...)):
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
-    styles = getSampleStyleSheet()
-    b_style = ParagraphStyle('RBody', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, textColor=colors.HexColor('#1e293b'))
