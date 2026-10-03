@@ -22,7 +22,7 @@ async def read_item():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans selection:bg-blue-500 selection:text-white">
         <div class="max-w-4xl mx-auto py-12 px-4 relative">
@@ -94,7 +94,6 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     matched_str = ", ".join(list(matched_skills)[:10]) if matched_skills else "None Detected"
     missing_str = ", ".join(list(missing_skills)[:8]) if missing_skills else "None"
 
-    # AI Smart Rewriter Line Generator
     ai_rewrite_list = []
     if missing_skills:
         for skill in list(missing_skills)[:3]:
@@ -110,7 +109,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     <head>
         <meta charset="UTF-8">
         <title>AI Resume Parser & Optimizer</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://tailwindcss.com"></script>
     </head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
