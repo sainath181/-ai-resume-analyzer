@@ -58,19 +58,21 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     else:
         rw_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
     rw_str, blt_payload = "".join(rw_list), "|||".join(hd_blt)
+    if not blt_payload.strip():
+        blt_payload = "EMPTY_DATA"
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="en">
     <head><meta charset="UTF-8"><title>AI Resume Parser & Optimizer</title><script src="https://tailwindcss.com"></script></head>
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
-        <div class="max-w-4xl mx-auto py-12 px-4">
+        <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white">📊 ATS Compatibility Audit Summary</h2>
                     <form action="/download-perfect-resume-pdf/" method="post">
                         <input type="hidden" name="orig_text" value="{txt.replace('"', '&quot;')}">
                         <input type="hidden" name="bullets" value="{blt_payload.replace('"', '&quot;')}">
-                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase">🤖 Auto-Inject & Download Perfect PDF Resume</button>
+                        <button type="submit" class="bg-purple-600 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase shadow-md hover:bg-purple-500 transition-colors">🤖 Auto-Inject & Download Perfect PDF Resume</button>
                     </form>
                 </div>
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl">
@@ -113,7 +115,7 @@ async def download_pdf_resume(orig_text: str = Form(...), bullets: str = Form(..
                 if c.stringWidth(test, "Helvetica", 10) < 504: curr = test
                 else: c.drawString(54, y, curr); y -= 16; curr = w
             c.drawString(54, y, curr); y -= 16
-    if bullets.strip():
+    if bullets.strip() and bullets != "EMPTY_DATA":
         y -= 20
         if y < 120: c.showPage(); y = 745
         c.setStrokeColor(HexColor('#3b82f6'))
