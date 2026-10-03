@@ -1,87 +1,127 @@
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse, StreamingResponse
-import pypdf, io, re
+Update main.py
+Status
+Deploy failed
+Duration
+34.5s
+Deployed
+Oct 3, 2026
+at
+1:10:03 PM
+GMT+5:30
 
-app = FastAPI()
+Trigger
+Auto-Deploy
+Source
+c58c954
+Notices
+Exited with status 1 while running your code.
+Read our docs for common ways to troubleshoot your deploy.
 
-def extract_text_from_pdf(b):
-    r = pypdf.PdfReader(io.BytesIO(b))
-    return "\n".join([p.extract_text() or "" for p in r.pages])
+All logs
+Search
+Search logs
 
-def fix_spelling(t):
-    rep = {"experiance": "Experience", "managment": "Management", "engeneering": "Engineering"}
-    for p, r in rep.items(): t = re.sub(r'\b'+p+r'\b', r, t, flags=re.IGNORECASE)
-    return t
 
-@app.get("/", response_class=HTMLResponse)
-async def read_item():
-    h = (
-        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Universal AI Resume Suite</title>'
-        '<script src="https://tailwindcss.com"></script></head>'
-        '<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-black text-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">'
-        '<div class="max-w-xl w-full bg-slate-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-slate-800 shadow-2xl relative">'
-        '<header class="text-center mb-8">'
-        '<div class="inline-flex items-center bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-bold text-blue-400 mb-4 uppercase tracking-widest shadow-inner">⚡ Premium AI Executive Suite</div>'
-        '<h1 class="text-4xl font-black text-white tracking-tight mb-2">Universal AI Resume Suite</h1>'
-        '<p class="text-slate-400 text-xs font-light tracking-wide">Supports all streams: CSE, IT, ME, CE, ECE, EEE</p></header>'
-        '<form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">'
-        '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all duration-300 shadow-inner">'
-        '<label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">1. Upload Candidate Resume (PDF)</label>'
-        '<input type="file" name="resume" accept=".pdf" required class="block w-full text-xs text-slate-400 cursor-pointer"></div>'
-        '<div class="space-y-2"><label class="block text-xs font-black text-slate-300 uppercase tracking-widest">2. Paste Custom Job Description (JD)</label>'
-        '<textarea name="jd" rows="5" placeholder="Paste company criteria or keywords like python, react, node here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-sm font-light shadow-inner placeholder:text-slate-700"></textarea></div>'
-        '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all duration-300 hover:scale-[1.01]">Optimize Profile State</button>'
-        '</form></div></body></html>'
+Live tail
+
+
+
+Collecting opentelemetry-api>=1.44.0 (from fastapi)
+  Using cached opentelemetry_api-1.45.0-py3-none-any.whl.metadata (1.4 kB)
+Collecting click>=7.0 (from uvicorn)
+  Using cached click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+Collecting h11>=0.8 (from uvicorn)
+  Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Using cached charset_normalizer-3.5.2-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+Collecting idna<4,>=2.5 (from requests)
+  Using cached idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+Collecting urllib3<3,>=1.26 (from requests)
+  Using cached urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting certifi>=2023.5.7 (from requests)
+  Using cached certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+Collecting annotated-types>=0.6.0 (from pydantic>=2.9.0->fastapi)
+  Using cached annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.46.5 (from pydantic>=2.9.0->fastapi)
+  Using cached pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+Collecting anyio<5,>=4.0.0 (from starlette>=0.46.0->fastapi)
+  Using cached anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+Using cached fastapi-0.142.2-py3-none-any.whl (144 kB)
+Using cached uvicorn-0.54.0-py3-none-any.whl (87 kB)
+Using cached pypdf-6.19.0-py3-none-any.whl (395 kB)
+Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+Using cached charset_normalizer-3.5.2-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (255 kB)
+Using cached idna-3.20-py3-none-any.whl (69 kB)
+Using cached urllib3-2.8.0-py3-none-any.whl (135 kB)
+Using cached python_multipart-0.0.32-py3-none-any.whl (30 kB)
+Using cached annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+Using cached certifi-2026.7.22-py3-none-any.whl (136 kB)
+Using cached click-8.5.0-py3-none-any.whl (125 kB)
+Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+Using cached opentelemetry_api-1.45.0-py3-none-any.whl (60 kB)
+Using cached pydantic-2.13.5-py3-none-any.whl (472 kB)
+Using cached pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Using cached annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Using cached starlette-1.7.0-py3-none-any.whl (78 kB)
+Using cached anyio-4.15.1-py3-none-any.whl (132 kB)
+Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Using cached typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Installing collected packages: urllib3, typing-extensions, python-multipart, pypdf, idna, h11, click, charset_normalizer, certifi, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, pydantic-core, opentelemetry-api, anyio, starlette, pydantic, fastapi
+Successfully installed annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 certifi-2026.7.22 charset_normalizer-3.5.2 click-8.5.0 fastapi-0.142.2 h11-0.16.0 idna-3.20 opentelemetry-api-1.45.0 pydantic-2.13.5 pydantic-core-2.46.5 pypdf-6.19.0 python-multipart-0.0.32 requests-2.34.2 starlette-1.7.0 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 uvicorn-0.54.0
+[notice] A new release of pip is available: 25.3 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip
+==> Uploading build...
+==> Uploaded in 1.8s. Compression took 1.1s
+==> Build successful 🎉
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+Traceback (most recent call last):
+  File "/opt/render/project/src/.venv/bin/uvicorn", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/click/core.py", line 1631, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/click/core.py", line 1552, in main
+    rv = self.invoke(ctx)
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/click/core.py", line 1415, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/click/core.py", line 910, in invoke
+    return callback(*args, **kwargs)
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/uvicorn/main.py", line 448, in main
+    run(
+    ~~~^
+        app,
+        ^^^^
+    ...<49 lines>...
+        reset_contextvars=reset_contextvars,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     )
-    return HTMLResponse(content=h, status_code=200)
-
-@app.post("/upload-resume/", response_class=HTMLResponse)
-async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
-    contents = await resume.read()
-    txt = fix_spelling(extract_text_from_pdf(contents))
-    j_w, r_w = set(re.findall(r'\b\w+\b', jd.lower())), set(re.findall(r'\b\w+\b', txt.lower()))
-    stop = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are'}
-    all_b = {'python', 'java', 'javascript', 'react', 'node', 'sql', 'html', 'css', 'aws', 'git', 'github', 'c', 'cpp', 'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'plc', 'scada'}
-    imp = {w for w in j_w if w in all_b or (len(w) > 2 and w not in stop)}
-    match = imp.intersection(r_w)
-    miss = imp.difference(r_w)
-    valid_miss = [s.title() if s.lower() not in ['sql', 'plc'] else s.upper() for s in miss if s.lower() in all_b]
-    inj_str = ", ".join(valid_miss[:3]) if valid_miss else "None"
-    pct = int(((len(match) + len(valid_miss[:3])) / len(imp)) * 100) if imp else 100
-    if pct > 100: pct = 100
-    m_str = ", ".join(list(match)[:10]).upper() if match else "NONE"
-    blt_payload = "-".join(valid_miss[:3]) if valid_miss else "EMPTY"
-    
-    res = (
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script></head>'
-        '<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-black text-gray-100 min-h-screen p-8 flex items-center justify-center relative overflow-hidden">'
-        '<div class="max-w-2xl w-full bg-slate-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-slate-800 shadow-2xl">'
-        '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-6 mb-6 gap-4">'
-        '<div><h2 class="text-xl font-black text-white tracking-wide uppercase">📊 ATS Optimization Matrix</h2>'
-        f'<p class="text-xs text-slate-400 mt-1">Score: <span class="text-green-400 font-black">{pct}% Live Match</span> 🎉</p></div>'
-        '<form action="/download-perfect-resume-pdf/" method="post" class="w-full sm:w-auto">'
-        f'<input type="hidden" name="bullets" value="{blt_payload}">'
-        '<button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-600/20">🤖 DOWNLOAD PERFECT PDF</button>'
-        '</form></div><div class="space-y-4 mb-6">'
-        f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-green-400 uppercase tracking-widest">✔️ Verified Target Matches:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{m_str}</p></div>'
-        f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Case-Sensitive Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{inj_str}</p></div>'
-        '</div><p class="text-[10px] text-slate-500 text-center font-light tracking-wide">💥 AI Framework Active: Auto-detected layout casing rules to protect candidate profile alignment.</p></div></body></html>'
-    )
-    return HTMLResponse(content=res, status_code=200)
-
-@app.post("/download-perfect-resume-pdf/")
-async def download_pdf_resume(bullets: str = Form(...)):
-    inj = ""
-    if bullets.strip() and bullets != "EMPTY":
-        inj = ", " + ", ".join([b.strip() for b in bullets.split("-")])
-        
+    ^
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/uvicorn/main.py", line 620, in run
+    config.load_app()
+    ~~~~~~~~~~~~~~~^^
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/uvicorn/config.py", line 434, in load_app
+    return import_from_string(self.app)
+  File "/opt/render/project/src/.venv/lib/python3.14/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/opt/render/project/python/Python-3.14.3/lib/python3.14/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 755, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 893, in get_code
+  File "<frozen importlib._bootstrap_external>", line 823, in source_to_code
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "/opt/render/project/src/main.py", line 78
     pdf_html = (
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script></head>'
-        '<body class="bg-white text-slate-900 p-8 font-sans"><div class="max-w-3xl mx-auto p-12 border border-slate-200 rounded-xl shadow-sm">'
-        '<div class="text-center no-print mb-6"><button onclick="window.print()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded shadow no-print" style="background-color:#2563eb; color:white; font-weight:bold; padding:10px 24px; border-radius:8px;">💾 CLICK HERE TO SAVE AS PERFECT PDF</button></div>'
-        '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2">CAREER OBJECTIVE</h2><p class="text-sm text-slate-700 leading-relaxed">Computer Science Engineering student seeking an entry-level Web Developer position. Eager to apply programming knowledge, web development fundamentals, and problem-solving skills while learning from industry professionals.</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2">EDUCATION</h2><div class="flex justify-between text-sm"><div><p class="font-bold text-slate-800">B.Tech - Computer Science and Engineering</p><p class="text-slate-600">Narayana Engineering College, Gudur</p></div><p class="font-semibold text-blue-800">CGPA: 7.8/10 (78%) | Current Year: 4-1</p></div></div>'
-        f'<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2">TECHNICAL SKILLS</h2><ul class="space-y-1.5 text-sm text-slate-700"><li><strong>Programming Languages:</strong> C, Java{inj}</li><li><strong>Web Technologies:</strong> HTML, CSS, JavaScript (Basics)</li><li><strong>Database:</strong> SQL Basics, Database Fundamentals</li><li><strong>Tools:</strong> Visual Studio Code, GitHub</li><li><strong>Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li></ul></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2">PROJECT</h2><div class="text-sm"><div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div><ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light"><li>Developed and deployed a responsive web application.</li><li>Designed user-friendly interfaces and layouts.</li><li>Integrated database functionality for storing and retrieving data.</li><li>Performed testing and debugging to improve performance and usability.</li></ul></div></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2">STRENGTHS</h2><p class="text-sm text-slate-700 font-light tracking-wide">• Quick Learner &bull; Team Player &bull; Communication Skills &bull; Problem Solving &bull; Adaptability &bull; Time Management</p></div>'
+               ^
+SyntaxError: '(' was never closed
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+Need better ways to work with logs? Try theRender
