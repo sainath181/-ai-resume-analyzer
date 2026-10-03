@@ -1,8 +1,12 @@
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 import pypdf
 import io
 import re
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 app = FastAPI()
 
@@ -28,24 +32,20 @@ async def read_item():
         <div class="max-w-4xl mx-auto py-12 px-4">
             <header class="text-center mb-12">
                 <div class="inline-flex bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 mb-4 tracking-wide uppercase">⚡ Production Ready AI Framework</div>
-                <h1 class="text-5xl font-black text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">AI Resume Parser & Optimizer</h1>
-                <p class="text-gray-400 text-lg font-light">Scan profiles and optimize engineering resumes dynamically with AI Rewriter.</p>
+                <h1 class="text-5xl font-black text-white mb-3">AI Resume Parser & Optimizer</h1>
+                <p class="text-gray-400 text-lg font-light">Scan profiles and optimize engineering resumes dynamically with AI Auto-Injector.</p>
             </header>
             <div class="bg-slate-900/60 p-8 rounded-2xl shadow-2xl border border-slate-800/80 mb-8">
-                <div class="flex items-center space-x-3 mb-6 border-b border-slate-800 pb-4">
-                    <div class="text-blue-400">🎯</div>
-                    <h2 class="text-xl font-bold text-white tracking-wide">ATS Optimization Engine</h2>
-                </div>
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-300 mb-2">1. Upload Candidate Resume (PDF)</label>
-                        <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                        <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-300 mb-2">2. Paste Custom Job Description (JD)</label>
-                        <textarea name="jd" rows="5" placeholder="Paste target requirements here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-light resize-none transition-all"></textarea>
+                        <textarea name="jd" rows="5" placeholder="Paste target requirements here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl transition duration-300 shadow-lg shadow-blue-500/20 uppercase tracking-wide">Calculate Compatibility Match</button>
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg">Calculate Compatibility Match</button>
                 </form>
             </div>
         </div>
@@ -77,14 +77,18 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     matched_str = ", ".join(list(matched_skills)[:10]) if matched_skills else "None Detected"
     missing_str = ", ".join(list(missing_skills)[:8]) if missing_skills else "None"
 
+    hidden_input_bullets = []
     ai_rewrite_list = []
     if missing_skills:
         for skill in list(missing_skills)[:3]:
-            ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold tracking-wide uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light leading-relaxed'>\\\"Leveraged <b class='text-blue-400 font-semibold'>{skill.upper()}</b> technologies and analytical framework layouts to optimize core production system configurations and streamline data pipelines.\\\"</p></div>")
+            bullet = f"Leveraged {skill.upper()} technologies and analytical framework layouts to optimize core production system configurations and streamline data pipelines."
+            hidden_input_bullets.append(bullet)
+            ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold tracking-wide uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light leading-relaxed'>\\\"{bullet}\\\"</p></div>")
     else:
         ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required for this target profile state.</p>")
     
     ai_rewrite_str = "".join(ai_rewrite_list)
+    bullets_payload = "|||".join(hidden_input_bullets)
 
     html_content = f"""
     <!DOCTYPE html>
@@ -97,7 +101,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
         <div id="report-content" class="max-w-4xl mx-auto py-12 px-4">
             <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 mb-8">
-                <h2 class="text-xl font-bold text-blue-400 mb-4">⚡ Extraction Intelligence</h2>
+                <h2 class="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">⚡ Extraction Intelligence</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-light">
                     <div><span class="text-slate-500 font-medium">Candidate Profile:</span> <span class="text-white font-semibold">Applicant Details</span></div>
                     <div><span class="text-slate-500 font-medium">Email:</span> <span class="text-slate-300">{email}</span></div>
@@ -107,8 +111,14 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
 
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl relative mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-                    <h2 class="text-2xl font-bold text-white tracking-wide">📊 ATS Compatibility Audit Summary</h2>
-                    <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">Download PDF Report</button>
+                    <h2 class="text-2xl font-bold text-white tracking-wide flex items-center gap-2">📊 ATS Compatibility Audit Summary</h2>
+                    <form action="/inject-pdf/" method="post" target="_blank">
+                        <input type="hidden" name="resume_text" value="{resume_text.replace('"', '&quot;')}">
+                        <input type="hidden" name="bullets" value="{bullets_payload.replace('"', '&quot;')}">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">
+                            🤖 Auto-Inject & Download PDF
+                        </button>
+                    </form>
                 </div>
 
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl border border-slate-800/50">
@@ -131,7 +141,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
 
                 <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-2xl mt-6">
                     <h3 class="text-md font-bold text-purple-400 mb-2 flex items-center gap-2">🤖 Smart AI Resume Rewriter</h3>
-                    <p class="text-xs text-slate-400 font-light mb-4">Copy and paste these optimized bullet points directly into your resume structure to clear filters:</p>
+                    <p class="text-xs text-slate-400 mb-4">Copy and paste these optimized bullet points directly into your resume structure to clear filters:</p>
                     <div class="space-y-3">
                         {ai_rewrite_str}
                     </div>
@@ -143,3 +153,10 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     </html>
     """
     return HTMLResponse(content=html_content, status_code=200)
+
+@app.post("/inject-pdf/")
+async def inject_pdf(resume_text: str = Form(...), bullets: str = Form(...)):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+    styles = getSampleStyleSheet()
+    b_style = ParagraphStyle('RBody', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, textColor=colors.HexColor('#1e293b'))
