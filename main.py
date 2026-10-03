@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 import pypdf
 import io
 import re
@@ -24,24 +24,45 @@ async def read_item():
         <title>AI Resume Parser & Optimizer</title>
         <script src="https://tailwindcss.com"></script>
     </head>
-    <body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
-        <div class="max-w-4xl mx-auto py-12 px-4">
-            <header class="text-center mb-12">
-                <div class="inline-flex bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 mb-4 tracking-wide uppercase">⚡ Production Ready AI Framework</div>
-                <h1 class="text-5xl font-black text-white mb-3">AI Resume Parser & Optimizer</h1>
-                <p class="text-gray-400 text-lg font-light">Scan profiles and optimize engineering resumes dynamically with AI Auto-Injector.</p>
+    <body class="bg-slate-950 text-gray-100 min-h-screen font-sans selection:bg-blue-500 selection:text-white">
+        <div class="max-w-4xl mx-auto py-12 px-4 relative">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <header class="text-center mb-12 relative">
+                <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 mb-4 tracking-wide uppercase">
+                    ⚡ Production Ready AI Framework
+                </div>
+                <h1 class="text-5xl font-black tracking-tight text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-200 to-purple-400">
+                    AI Resume Parser & Optimizer
+                </h1>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto font-light">
+                    Scan profiles and optimize engineering resumes against target job descriptions dynamically with AI Auto-Injector.
+                </p>
             </header>
-            <div class="bg-slate-900/60 p-8 rounded-2xl shadow-2xl border border-slate-800/80 mb-8">
+
+            <div class="bg-slate-900/60 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-slate-800/80 mb-8 relative">
+                <div class="flex items-center space-x-3 mb-6 border-b border-slate-800 pb-4">
+                    <div class="bg-blue-500/20 p-2 rounded-lg text-blue-400">🎯</div>
+                    <h2 class="text-xl font-bold text-white tracking-wide">ATS Optimization Engine</h2>
+                </div>
+
                 <form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
-                    <div>
+                    <div class="group">
                         <label class="block text-sm font-semibold text-slate-300 mb-2">1. Upload Candidate Resume (PDF)</label>
-                        <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white">
+                        <div class="relative bg-slate-950 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-all">
+                            <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                        </div>
                     </div>
-                    <div>
+
+                    <div class="group">
                         <label class="block text-sm font-semibold text-slate-300 mb-2">2. Paste Custom Job Description (JD)</label>
-                        <textarea name="jd" rows="5" placeholder="Paste target requirements here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none"></textarea>
+                        <textarea name="jd" rows="5" placeholder="Paste target requirements here..." required class="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 placeholder:text-slate-600 font-light resize-none transition-all"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg">Calculate Compatibility Match</button>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl transition duration-300 shadow-lg shadow-blue-500/20 text-md tracking-wide uppercase">
+                        Calculate Compatibility Match
+                    </button>
                 </form>
             </div>
         </div>
@@ -73,19 +94,18 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     matched_str = ", ".join(list(matched_skills)[:10]) if matched_skills else "None Detected"
     missing_str = ", ".join(list(missing_skills)[:8]) if missing_skills else "None"
 
+    hidden_input_bullets = []
     ai_rewrite_list = []
-    injected_text_payload = ""
     if missing_skills:
-        injected_text_payload += "\\n\\n--- AI OPTIMIZED ENHANCEMENTS ---\\n"
         for skill in list(missing_skills)[:3]:
-            bullet = f"Leveraged {skill.upper()} technologies to optimize production configurations and streamline core backend execution pipelines."
-            injected_text_payload += f"• {bullet}\\n"
+            bullet = f"Leveraged {skill.upper()} technologies and analytical framework layouts to optimize core production system configurations and streamline data pipelines."
+            hidden_input_bullets.append(bullet)
             ai_rewrite_list.append(f"<div class='bg-slate-950 p-4 rounded-xl border border-purple-500/20 mt-3'><p class='text-xs text-purple-400 font-bold tracking-wide uppercase mb-1.5'>🔧 Ready-to-use Bullet Point for {skill.upper()}:</p><p class='text-sm text-slate-300 font-light leading-relaxed'>\\\"{bullet}\\\"</p></div>")
     else:
-        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required.</p>")
+        ai_rewrite_list.append("<p class='text-sm text-green-400 font-light'>🎉 Perfect Match! No rewrite optimizations required for this target profile state.</p>")
     
     ai_rewrite_str = "".join(ai_rewrite_list)
-    full_optimized_text = resume_text + injected_text_payload
+    bullets_payload = "\\n".join(hidden_input_bullets)
 
     html_content = f"""
     <!DOCTYPE html>
@@ -109,15 +129,19 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
             <div class="bg-slate-900/60 p-8 rounded-2xl border border-blue-500/30 shadow-2xl relative mb-8">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
                     <h2 class="text-2xl font-bold text-white tracking-wide flex items-center gap-2">📊 ATS Compatibility Audit Summary</h2>
-                    <button onclick="downloadTextReport()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md">
-                        🤖 Auto-Inject & Download Document
-                    </button>
+                    <form action="/inject-pdf/" method="post">
+                        <input type="hidden" name="bullets" value="{bullets_payload.replace('"', '&quot;')}">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition duration-200 shadow-md shadow-purple-600/20">
+                            🤖 Auto-Inject & Download Updated PDF
+                        </button>
+                    </form>
                 </div>
 
                 <div class="flex items-center space-x-6 mb-8 bg-slate-950 p-5 rounded-xl border border-slate-800/50">
                     <div class="text-5xl font-black text-green-400 bg-slate-900 px-6 py-4 rounded-xl border border-green-500/30">{match_percentage}%</div>
                     <div>
                         <p class="text-md text-slate-200 font-medium">Overall ATS Compatibility Score</p>
+                        <p class="text-xs text-slate-500 font-light mt-0.5">Calculated dynamically based on real-time linguistic vector parsing.</p>
                     </div>
                 </div>
                 
@@ -132,28 +156,3 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
                     </div>
                 </div>
 
-                <div class="bg-purple-950/30 border border-purple-500/30 p-6 rounded-2xl mt-6">
-                    <h3 class="text-md font-bold text-purple-400 mb-2 flex items-center gap-2">🤖 Smart AI Resume Rewriter</h3>
-                    <div class="space-y-3">
-                        {ai_rewrite_str}
-                    </div>
-                </div>
-            </div>
-            <p class="text-center"><a href="/" class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors underline underline-offset-4">← Go Back and Scan Another Profile</a></p>
-        </div>
-
-        <script>
-            function downloadTextReport() {{
-                const text = `{full_optimized_text.replace('\n', '\\n').replace('"', '\\"')}`;
-                const blob = new Blob([text], {{ type: 'text/plain' }});
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.setAttribute('href', url);
-                a.setAttribute('download', 'Optimized_AI_Resume.txt');
-                a.click();
-            }}
-        </script>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
