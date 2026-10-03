@@ -92,44 +92,37 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
 
 @app.post("/download-perfect-resume-doc/")
 async def download_doc_resume(orig_text: str = Form(...), bullets: str = Form(...)):
-    # Flawless Executive Web-Document Stream Engine without ReportLab dependencies
-    formatted_html = f\"\"\"
+    formatted_html = """
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
         <title>Professional Resume</title>
         <script src="https://tailwindcss.com"></script>
-        <style>@media print {{ body {{ bg-white; text-black; }} .no-print {{ display: none; }} }}</style>
     </head>
     <body class="bg-slate-50 text-slate-900 p-8 font-sans">
         <div class="max-w-3xl mx-auto bg-white p-12 rounded-xl shadow-md border border-slate-200">
-            <div class="text-center no-print mb-6">
+            <div class="text-center mb-6">
                 <button onclick="window.print()" class="bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow hover:bg-blue-700">💾 Click Here to Save as Perfect PDF</button>
                 <p class="text-xs text-slate-500 mt-2">Alignment and formatting fixed automatically by AI Suite.</p>
             </div>
-            
             <div class="border-b-4 border-blue-900 pb-4 mb-6">
                 <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">PROFESSIONAL ENGINEERING RESUME</h1>
             </div>
-            
             <div class="space-y-4 text-sm leading-relaxed whitespace-pre-line text-slate-700">
-                {orig_text}
-            </div>
-    \"\"\"
+    """ + orig_text + "</div>"
     
     if bullets.strip() and bullets != "EMPTY_DATA":
-        formatted_html += f\"\"\"
+        formatted_html += """
             <div class="mt-8 border-t-2 border-blue-500 pt-4">
                 <h3 class="text-lg font-bold text-blue-800 uppercase mb-3">AI OPTIMIZED ATS TECHNICAL EXPERIENCES</h3>
                 <ul class="list-disc pl-5 space-y-2 text-sm text-slate-800 font-medium">
-        \"\"\"
+        """
         for b in bullets.split("|||"):
             if b.strip():
                 formatted_html += f"<li class='mb-1'>{b.strip()}</li>"
         formatted_html += "</ul></div>"
         
     formatted_html += "</div></body></html>"
-    
     file_stream = io.BytesIO(formatted_html.encode("utf-8"))
     return StreamingResponse(file_stream, media_type="text/html", headers={"Content-Disposition": "attachment; filename=Perfect_AI_Resume.html"})
