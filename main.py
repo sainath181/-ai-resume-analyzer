@@ -55,10 +55,10 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     if inj_str:
         inj_skills_string = ", " + inj_str
 
-    # 🎯 Single Page Live Printing Output: No separate download pages, direct print triggering instantly!
+    # 🎯 Single Page Live Matrix Suite: Completely hidden from user view on the web, triggers purely via CSS print frames safely!
     res = (
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
-        '<style>@media print { .no-print { display: none !important; } .print-resume { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
+        '<style>@media screen { .resume-preview { display: none !important; } } @media print { .no-print { display: none !important; } .resume-preview { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
         '<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-black text-gray-100 min-h-screen p-4 flex items-center justify-center relative font-sans">'
         '<div class="max-w-2xl w-full bg-slate-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-slate-800 shadow-2xl no-print">'
         '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-6 mb-6 gap-4">'
@@ -70,8 +70,8 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Case-Sensitive Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{inj_str if inj_str else "NONE"}</p></div>'
         '</div><p class="text-[10px] text-slate-500 text-center font-light tracking-wide">💥 AI Framework Active: Auto-detected casing format parameters natively.</p></div>'
         
-        # 📑 Injected Professional Resume Layout Hidden on Web, visible only during PDF Generation state!
-        '<div class="hidden print-resume max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
+        # 📑 Pristine Executive Resume Structure (Strictly hidden on browser screen, active inside download stream boundaries only!)
+        '<div class="resume-preview max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
         '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">CAREER OBJECTIVE</h2><p class="text-sm text-slate-700 leading-relaxed">Computer Science Engineering student seeking an entry-level Web Developer position. Eager to apply programming knowledge, web development fundamentals, and problem-solving skills while learning from industry professionals.</p></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">EDUCATION</h2><div class="flex justify-between text-sm"><div><p class="font-bold text-slate-800">B.Tech - Computer Science and Engineering</p><p class="text-slate-600">Narayana Engineering College, Gudur</p></div><p class="font-semibold text-blue-800">CGPA: 7.8/10 (78%) | Current Year: 4-1</p></div></div>'
