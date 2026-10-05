@@ -8,157 +8,136 @@ import io
 import re
 import html
 
-
 app = FastAPI(title="Universal AI Resume Suite")
 
 
 # ============================================================
-# SKILL DATABASE
+# KEYWORD DATABASE
 # ============================================================
 
-SKILLS = [
-    # Programming
-    "python",
-    "java",
-    "javascript",
-    "typescript",
-    "c",
-    "c++",
-    "c#",
-    "go",
-    "rust",
-    "php",
-    "ruby",
-    "kotlin",
-    "swift",
+KEYWORD_GROUPS = {
+    "Programming Languages": [
+        "python", "java", "c", "c++", "c#", "javascript", "typescript",
+        "go", "golang", "rust", "kotlin", "swift", "php", "ruby",
+        "scala", "r", "matlab", "dart", "perl"
+    ],
 
-    # Web
-    "html",
-    "css",
-    "react",
-    "angular",
-    "vue",
-    "node.js",
-    "node",
-    "express",
-    "django",
-    "flask",
-    "fastapi",
-    "rest api",
-    "graphql",
+    "Web Technologies": [
+        "html", "html5", "css", "css3", "javascript", "react",
+        "react.js", "reactjs", "angular", "vue", "vue.js",
+        "node.js", "nodejs", "express", "express.js",
+        "bootstrap", "tailwind", "next.js", "nextjs",
+        "django", "flask", "fastapi", "rest api", "restful api"
+    ],
 
-    # Databases
-    "sql",
-    "mysql",
-    "postgresql",
-    "mongodb",
-    "oracle",
-    "redis",
-    "sqlite",
-    "database",
+    "Database": [
+        "sql", "mysql", "postgresql", "postgres", "mongodb",
+        "oracle", "sqlite", "redis", "firebase", "database",
+        "database management", "nosql"
+    ],
 
-    # Cloud / DevOps
-    "aws",
-    "azure",
-    "gcp",
-    "docker",
-    "kubernetes",
-    "jenkins",
-    "git",
-    "github",
-    "gitlab",
-    "ci/cd",
+    "Tools": [
+        "git", "github", "gitlab", "bitbucket", "visual studio code",
+        "vs code", "docker", "postman", "jira", "jenkins",
+        "linux", "windows", "npm", "maven", "gradle"
+    ],
 
-    # AI / Data
-    "artificial intelligence",
-    "ai",
-    "machine learning",
-    "deep learning",
-    "data science",
-    "data analysis",
-    "pandas",
-    "numpy",
-    "scikit-learn",
-    "tensorflow",
-    "pytorch",
-    "nlp",
-    "natural language processing",
-    "computer vision",
+    "Cloud": [
+        "aws", "amazon web services", "azure", "microsoft azure",
+        "google cloud", "gcp", "docker", "kubernetes", "terraform"
+    ],
 
-    # Engineering
-    "autocad",
-    "solidworks",
-    "matlab",
-    "embedded systems",
-    "iot",
-    "internet of things",
-    "plc",
-    "robotics",
+    "AI & Data": [
+        "artificial intelligence", "ai", "machine learning", "ml",
+        "deep learning", "nlp", "natural language processing",
+        "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch",
+        "opencv", "data analysis", "data science"
+    ],
 
-    # Business
-    "marketing",
-    "sales",
-    "finance",
-    "accounting",
-    "project management",
-    "business analysis",
-    "communication",
-    "leadership",
-    "teamwork",
-    "problem solving",
-    "excel",
-    "power bi",
-    "tableau",
+    "Engineering": [
+        "autocad", "solidworks", "catia", "ansys", "matlab",
+        "embedded systems", "microcontroller", "arduino",
+        "raspberry pi", "iot", "internet of things"
+    ],
 
-    # Pharmacy / Life Science
-    "pharmacology",
-    "pharmaceutics",
-    "pharmaceutical",
-    "clinical research",
-    "clinical trials",
-    "drug discovery",
-    "quality control",
-    "quality assurance",
-    "gmp",
-    "glp",
-    "regulatory affairs",
-    "medical coding",
-    "pharmacovigilance"
-]
+    "Business": [
+        "sales", "marketing", "finance", "accounting", "excel",
+        "microsoft excel", "power bi", "tableau", "business analysis",
+        "project management", "communication", "leadership"
+    ],
+
+    "Pharmacy": [
+        "pharmacology", "pharmaceutics", "pharmaceutical chemistry",
+        "clinical pharmacy", "pharmacovigilance", "drug safety",
+        "drug development", "quality control", "quality assurance",
+        "gmp", "glp", "regulatory affairs"
+    ],
+
+    "Soft Skills": [
+        "communication", "leadership", "teamwork", "team player",
+        "problem solving", "problem-solving", "time management",
+        "adaptability", "quick learner", "critical thinking"
+    ]
+}
 
 
-# ============================================================
-# SECTION DATABASE
-# ============================================================
-
-SECTION_NAMES = [
-    "summary",
-    "objective",
-    "profile",
-    "skills",
-    "technical skills",
-    "experience",
-    "work experience",
-    "employment",
-    "internship",
-    "education",
-    "projects",
-    "certifications",
-    "certificates",
-    "achievements",
-    "awards",
-    "publications",
-    "languages",
-    "interests"
-]
+SECTION_ALIASES = {
+    "summary": [
+        "summary",
+        "professional summary",
+        "profile",
+        "career objective",
+        "objective"
+    ],
+    "skills": [
+        "skills",
+        "technical skills",
+        "key skills",
+        "technical expertise"
+    ],
+    "experience": [
+        "experience",
+        "work experience",
+        "employment",
+        "professional experience",
+        "internship",
+        "internships"
+    ],
+    "projects": [
+        "project",
+        "projects",
+        "academic projects",
+        "personal projects"
+    ],
+    "education": [
+        "education",
+        "academic qualification",
+        "qualifications"
+    ],
+    "certifications": [
+        "certification",
+        "certifications",
+        "courses",
+        "training"
+    ],
+    "activities": [
+        "activities",
+        "interests",
+        "hobbies",
+        "activities & interests"
+    ]
+}
 
 
 # ============================================================
-# TEXT UTILITIES
+# BASIC FUNCTIONS
 # ============================================================
 
 def normalize(text):
-    return re.sub(r"\s+", " ", text.lower()).strip()
+    text = text.lower()
+    text = text.replace("–", "-").replace("—", "-")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
 def clean_text(text):
@@ -168,504 +147,420 @@ def clean_text(text):
     return text.strip()
 
 
-# ============================================================
-# PDF EXTRACTION
-# ============================================================
-
-def extract_pdf_text(data):
-    try:
-        reader = PdfReader(io.BytesIO(data))
-    except Exception:
-        return ""
+def extract_pdf_text(file_bytes):
+    reader = PdfReader(io.BytesIO(file_bytes))
 
     pages = []
 
     for page in reader.pages:
         try:
-            pages.append(page.extract_text() or "")
+            text = page.extract_text() or ""
+            pages.append(text)
         except Exception:
             pages.append("")
 
-    return "\n".join(pages)
+    return clean_text("\n".join(pages))
 
 
 # ============================================================
-# SKILL DETECTION
+# KEYWORD MATCHING
 # ============================================================
 
-def find_skills(text):
+def keyword_exists(text, keyword):
+    text = normalize(text)
+    keyword = normalize(keyword)
 
-    normalized = normalize(text)
+    if keyword == "c":
+        return bool(re.search(r"\b(c)\b", text))
 
+    if keyword == "r":
+        return bool(re.search(r"\b(r)\b", text))
+
+    escaped = re.escape(keyword)
+
+    return bool(re.search(r"(?<![a-z0-9])" + escaped + r"(?![a-z0-9])", text))
+
+
+def find_job_keywords(job_description):
     found = []
 
-    for skill in SKILLS:
+    jd = normalize(job_description)
 
-        pattern = (
-            r"(?<![a-z0-9])"
-            + re.escape(skill.lower())
-            + r"(?![a-z0-9])"
-        )
+    for group, keywords in KEYWORD_GROUPS.items():
 
-        if re.search(pattern, normalized):
-            found.append(skill)
+        for keyword in keywords:
 
-    return sorted(set(found))
+            if keyword_exists(jd, keyword):
+
+                if keyword not in found:
+                    found.append(keyword)
+
+    return found
 
 
-# ============================================================
-# JOB DESCRIPTION KEYWORDS
-# ============================================================
+def find_missing_keywords(resume_text, job_description):
+    job_keywords = find_job_keywords(job_description)
 
-def extract_job_keywords(job_description):
+    missing = []
 
-    return find_skills(job_description)
+    for keyword in job_keywords:
+
+        if not keyword_exists(resume_text, keyword):
+
+            missing.append(keyword)
+
+    return job_keywords, missing
 
 
 # ============================================================
 # SECTION DETECTION
 # ============================================================
 
-def detect_sections(text):
-
-    normalized = normalize(text)
-
-    sections = {}
-
-    for section in SECTION_NAMES:
-
-        if section in normalized:
-            sections[section] = True
-
-    return sections
-
-
-# ============================================================
-# FORMAT ANALYZER
-# ============================================================
-
-def analyze_format(text):
-
-    lines = [
-        line.strip()
-        for line in text.splitlines()
-        if line.strip()
-    ]
-
-    score = 100
-    problems = []
-
-    if len(text) < 300:
-        score -= 25
-        problems.append(
-            "Very little readable text was detected."
-        )
-
-    if len(lines) < 10:
-        score -= 15
-        problems.append(
-            "Resume may have insufficient structured content."
-        )
-
-    sections = detect_sections(text)
-
-    section_groups = [
-        ["summary", "objective", "profile"],
-        ["skills", "technical skills"],
-        [
-            "experience",
-            "work experience",
-            "employment",
-            "internship"
-        ],
-        ["education"]
-    ]
-
-    for group in section_groups:
-
-        if not any(item in sections for item in group):
-
-            score -= 10
-
-            problems.append(
-                "Missing or unclear section: "
-                + " / ".join(group)
-            )
-
-    if len(text) > 18000:
-
-        score -= 5
-
-        problems.append(
-            "Resume contains a large amount of text."
-        )
-
-    score = max(0, min(100, score))
-
-    return score, problems
-
-
-# ============================================================
-# ALIASES
-# ============================================================
-
-ALIASES = {
-
-    "node.js": [
-        "node",
-        "nodejs"
-    ],
-
-    "rest api": [
-        "rest",
-        "api"
-    ],
-
-    "machine learning": [
-        "ml"
-    ],
-
-    "artificial intelligence": [
-        "ai"
-    ],
-
-    "natural language processing": [
-        "nlp"
-    ],
-
-    "internet of things": [
-        "iot"
-    ],
-
-    "postgresql": [
-        "postgres"
-    ],
-
-    "scikit-learn": [
-        "sklearn"
-    ],
-
-    "javascript": [
-        "js"
-    ],
-
-    "typescript": [
-        "ts"
-    ],
-
-    "c++": [
-        "cpp"
-    ]
-}
-
-
-# ============================================================
-# CHECK WHETHER RESUME SUPPORTS KEYWORD
-# ============================================================
-
-def resume_supports_keyword(keyword, resume_text):
-
-    normalized = normalize(resume_text)
-
-    keyword = keyword.lower()
-
-    if keyword in normalized:
-        return True
-
-    for alias in ALIASES.get(keyword, []):
-
-        if alias in normalized:
-            return True
-
-    return False
-
-
-# ============================================================
-# FIND MISSING JOB KEYWORDS
-# ============================================================
-
-def find_missing_keywords(resume_text, job_description):
-
-    resume_keywords = set(
-        find_skills(resume_text)
-    )
-
-    job_keywords = set(
-        extract_job_keywords(job_description)
-    )
-
-    missing = job_keywords - resume_keywords
-
-    safe_missing = []
-
-    for keyword in sorted(missing):
-
-        # Only add if the resume already contains
-        # some evidence for the keyword.
-        if resume_supports_keyword(
-            keyword,
-            resume_text
-        ):
-            safe_missing.append(keyword)
-
-    return safe_missing
-
-
-# ============================================================
-# SPLIT RESUME INTO SECTIONS
-# ============================================================
-
-def split_sections(text):
+def find_existing_section(text, section_type):
 
     lines = text.splitlines()
 
-    sections = {
-        "General": []
-    }
+    aliases = SECTION_ALIASES.get(section_type, [])
 
-    current_section = "General"
+    for i, line in enumerate(lines):
 
-    for line in lines:
+        clean = normalize(line)
 
-        clean = line.strip()
+        for alias in aliases:
 
-        if not clean:
-            continue
+            if clean == alias:
+                return i
 
-        normalized = clean.lower().strip(": ")
+            if clean.startswith(alias + ":"):
+                return i
 
-        detected = None
-
-        for section in SECTION_NAMES:
-
-            if normalized == section:
-                detected = section.title()
-                break
-
-        if detected:
-
-            current_section = detected
-
-            if current_section not in sections:
-                sections[current_section] = []
-
-        else:
-
-            sections[current_section].append(clean)
-
-    return sections
+    return -1
 
 
-# ============================================================
-# KEYWORD SECTION
-# ============================================================
+def get_section_for_keyword(keyword):
 
-def keyword_section(keyword):
+    keyword = normalize(keyword)
 
-    technical_keywords = {
+    for section, keywords in KEYWORD_GROUPS.items():
 
-        "python",
-        "java",
-        "javascript",
-        "typescript",
-        "c",
-        "c++",
-        "c#",
-        "go",
-        "rust",
-        "php",
+        for item in keywords:
 
-        "html",
-        "css",
-        "react",
-        "angular",
-        "vue",
-        "node",
-        "node.js",
-        "express",
-        "django",
-        "flask",
-        "fastapi",
-
-        "rest api",
-        "graphql",
-
-        "sql",
-        "mysql",
-        "postgresql",
-        "mongodb",
-        "oracle",
-
-        "aws",
-        "azure",
-        "gcp",
-        "docker",
-        "kubernetes",
-
-        "git",
-        "github",
-        "gitlab",
-
-        "machine learning",
-        "deep learning",
-        "artificial intelligence",
-        "data science",
-        "data analysis",
-
-        "pandas",
-        "numpy",
-        "tensorflow",
-        "pytorch",
-
-        "nlp",
-        "natural language processing",
-        "computer vision"
-    }
-
-    if keyword.lower() in technical_keywords:
-        return "Skills"
+            if keyword == normalize(item):
+                return section
 
     return "Skills"
+
+
+# ============================================================
+# FORMAT ANALYSIS
+# ============================================================
+
+def analyze_format(resume_text):
+
+    problems = []
+
+    lower = normalize(resume_text)
+
+    if not any(x in lower for x in SECTION_ALIASES["experience"]):
+        problems.append(
+            "Missing or unclear section: experience / work experience / employment / internship"
+        )
+
+    if not any(x in lower for x in SECTION_ALIASES["education"]):
+        problems.append("Missing or unclear Education section")
+
+    if not any(x in lower for x in SECTION_ALIASES["skills"]):
+        problems.append("Missing or unclear Skills section")
+
+    return problems
+
+
+# ============================================================
+# ATS SCORE
+# ============================================================
+
+def calculate_ats_score(job_keywords, resume_text):
+
+    if not job_keywords:
+        return 0
+
+    matched = 0
+
+    for keyword in job_keywords:
+
+        if keyword_exists(resume_text, keyword):
+            matched += 1
+
+    return round((matched / len(job_keywords)) * 100)
+
+
+# ============================================================
+# ADD KEYWORDS TO CORRECT PLACE
+# ============================================================
+
+def add_keyword_to_skills_section(text, keyword):
+
+    lines = text.splitlines()
+
+    skills_index = find_existing_section(text, "skills")
+
+    if skills_index == -1:
+
+        # Add a Skills section near the beginning
+        new_text = (
+            "SKILLS\n"
+            "=======\n"
+            f"Programming Languages: {keyword}\n\n"
+            + text
+        )
+
+        return new_text
+
+    target_section = get_section_for_keyword(keyword)
+
+    # Find existing target line
+    for i in range(skills_index + 1, min(skills_index + 40, len(lines))):
+
+        line = lines[i].strip()
+
+        lower_line = normalize(line)
+
+        if target_section == "Programming Languages":
+
+            if (
+                lower_line.startswith("programming languages:")
+                or lower_line.startswith("programming language:")
+                or lower_line.startswith("languages:")
+            ):
+
+                if keyword.lower() not in lower_line:
+
+                    lines[i] = line.rstrip() + ", " + keyword
+
+                    return "\n".join(lines)
+
+        elif target_section == "Web Technologies":
+
+            if (
+                lower_line.startswith("web technologies:")
+                or lower_line.startswith("web technology:")
+                or lower_line.startswith("frontend:")
+                or lower_line.startswith("front end:")
+            ):
+
+                if keyword.lower() not in lower_line:
+
+                    lines[i] = line.rstrip() + ", " + keyword
+
+                    return "\n".join(lines)
+
+        elif target_section == "Database":
+
+            if (
+                lower_line.startswith("database:")
+                or lower_line.startswith("databases:")
+                or lower_line.startswith("database technologies:")
+            ):
+
+                if keyword.lower() not in lower_line:
+
+                    lines[i] = line.rstrip() + ", " + keyword
+
+                    return "\n".join(lines)
+
+        elif target_section == "Tools":
+
+            if (
+                lower_line.startswith("tools:")
+                or lower_line.startswith("software:")
+                or lower_line.startswith("tools & technologies:")
+            ):
+
+                if keyword.lower() not in lower_line:
+
+                    lines[i] = line.rstrip() + ", " + keyword
+
+                    return "\n".join(lines)
+
+        elif target_section == "Cloud":
+
+            if (
+                lower_line.startswith("cloud:")
+                or lower_line.startswith("cloud technologies:")
+                or lower_line.startswith("cloud platforms:")
+            ):
+
+                if keyword.lower() not in lower_line:
+
+                    lines[i] = line.rstrip() + ", " + keyword
+
+                    return "\n".join(lines)
+
+    # If exact category line doesn't exist,
+    # add a new category inside Skills.
+
+    insert_position = skills_index + 1
+
+    category_order = [
+        "Programming Languages",
+        "Web Technologies",
+        "Database",
+        "Tools",
+        "Cloud",
+        "AI & Data",
+        "Engineering",
+        "Business",
+        "Pharmacy",
+        "Soft Skills"
+    ]
+
+    # Find end of Skills section
+    end_position = len(lines)
+
+    for i in range(skills_index + 1, len(lines)):
+
+        lower = normalize(lines[i])
+
+        for section_aliases in SECTION_ALIASES.values():
+
+            for alias in section_aliases:
+
+                if lower == alias and i > skills_index + 1:
+                    end_position = i
+                    break
+
+            if end_position != len(lines):
+                break
+
+        if end_position != len(lines):
+            break
+
+    category_line = f"{target_section}: {keyword}"
+
+    lines.insert(end_position, category_line)
+
+    return "\n".join(lines)
+
+
+def add_keyword_to_resume(text, keyword):
+
+    target = get_section_for_keyword(keyword)
+
+    # Important:
+    # Only automatically add technical/job keywords.
+    # Do not fabricate experience.
+
+    if target in [
+        "Programming Languages",
+        "Web Technologies",
+        "Database",
+        "Tools",
+        "Cloud",
+        "AI & Data",
+        "Engineering",
+        "Business",
+        "Pharmacy",
+        "Soft Skills"
+    ]:
+
+        return add_keyword_to_skills_section(text, keyword)
+
+    return text
 
 
 # ============================================================
 # BUILD OPTIMIZED RESUME
 # ============================================================
 
-def build_optimized_resume(
-    resume_text,
-    safe_missing_keywords
-):
+def build_optimized_resume(resume_text, missing_keywords):
 
-    sections = split_sections(resume_text)
+    optimized = resume_text
 
-    if "Skills" not in sections:
+    added = []
 
-        sections["Skills"] = []
+    for keyword in missing_keywords:
 
-    existing_skills = " ".join(
-        sections["Skills"]
-    ).lower()
+        before = optimized
 
-    for keyword in safe_missing_keywords:
+        optimized = add_keyword_to_resume(
+            optimized,
+            keyword
+        )
 
-        if keyword.lower() not in existing_skills:
+        if optimized != before:
 
-            sections["Skills"].append(
-                keyword.title()
-            )
+            added.append(keyword)
 
-            existing_skills += " " + keyword.lower()
-
-    output = []
-
-    order = [
-
-        "General",
-
-        "Summary",
-        "Objective",
-        "Profile",
-
-        "Skills",
-        "Technical Skills",
-
-        "Experience",
-        "Work Experience",
-        "Employment",
-        "Internship",
-
-        "Projects",
-
-        "Education",
-
-        "Certifications",
-        "Certificates",
-
-        "Achievements",
-        "Awards",
-
-        "Publications",
-
-        "Languages",
-        "Interests"
-    ]
-
-    used = set()
-
-    for section in order:
-
-        if section not in sections:
-            continue
-
-        used.add(section)
-
-        if section != "General":
-
-            output.append("")
-            output.append(section.upper())
-            output.append("=" * len(section))
-
-        for item in sections[section]:
-
-            output.append(item)
-
-    for section, items in sections.items():
-
-        if section in used:
-            continue
-
-        output.append("")
-        output.append(section.upper())
-        output.append("=" * len(section))
-
-        for item in items:
-            output.append(item)
-
-    return "\n".join(output).strip()
+    return optimized, added
 
 
 # ============================================================
 # CREATE DOCX
 # ============================================================
 
-def create_docx(resume_text):
+def create_docx(text):
 
     document = Document()
 
-    style = document.styles["Normal"]
+    normal_style = document.styles["Normal"]
 
-    style.font.name = "Arial"
-    style.font.size = Pt(10.5)
+    normal_style.font.name = "Arial"
+    normal_style.font.size = Pt(10)
 
-    for line in resume_text.splitlines():
+    for line in text.splitlines():
 
-        if not line.strip():
+        line = line.rstrip()
 
+        if not line:
             document.add_paragraph()
             continue
 
-        paragraph = document.add_paragraph()
-
-        paragraph.paragraph_format.space_after = Pt(4)
+        # Main headings
+        upper = line.upper().strip()
 
         if (
-            line.isupper()
-            and len(line) < 60
+            upper in [
+                "SKILLS",
+                "EDUCATION",
+                "EXPERIENCE",
+                "WORK EXPERIENCE",
+                "PROJECTS",
+                "CERTIFICATIONS",
+                "ACTIVITIES & INTERESTS",
+                "SUMMARY",
+                "CAREER OBJECTIVE"
+            ]
         ):
 
-            run = paragraph.add_run(line)
+            p = document.add_paragraph()
+
+            run = p.add_run(line)
 
             run.bold = True
             run.font.size = Pt(12)
 
-        elif set(line.strip()) == {"="}:
+        elif (
+            line.startswith("Programming Languages:")
+            or line.startswith("Web Technologies:")
+            or line.startswith("Database:")
+            or line.startswith("Tools:")
+            or line.startswith("Cloud:")
+            or line.startswith("AI & Data:")
+            or line.startswith("Engineering:")
+            or line.startswith("Business:")
+            or line.startswith("Pharmacy:")
+            or line.startswith("Soft Skills:")
+        ):
 
-            continue
+            p = document.add_paragraph()
+
+            run = p.add_run(line)
+
+            run.bold = True
 
         else:
 
-            paragraph.add_run(line)
+            document.add_paragraph(line)
 
     output = io.BytesIO()
 
@@ -681,606 +576,416 @@ def create_docx(resume_text):
 # ============================================================
 
 @app.get("/", response_class=HTMLResponse)
-async def home():
+def home():
 
-    return HTMLResponse(
-        """
-<!DOCTYPE html>
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Universal AI Resume Suite</title>
 
-<html>
+        <style>
 
-<head>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            padding: 40px;
+        }
 
-<meta charset="UTF-8">
+        .box {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
 
-<title>Universal AI Resume Suite</title>
+        h1 {
+            text-align: center;
+        }
 
-<style>
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
 
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 40px;
-}
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
 
-.container {
-    max-width: 850px;
-    margin: auto;
-    background: white;
-    padding: 35px;
-    border-radius: 15px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.08);
-}
+        textarea {
+            height: 220px;
+        }
 
-h1 {
-    margin-top: 0;
-}
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            background: #111827;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-label {
-    font-weight: bold;
-    display: block;
-    margin-top: 20px;
-    margin-bottom: 8px;
-}
+        </style>
+    </head>
 
-input[type=file],
-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
+    <body>
 
-textarea {
-    min-height: 220px;
-    resize: vertical;
-}
+        <div class="box">
 
-button {
-    margin-top: 25px;
-    padding: 13px 25px;
-    border: none;
-    border-radius: 8px;
-    background: #111827;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-}
+            <h1>Universal AI Resume Suite</h1>
 
-button:hover {
-    background: #374151;
-}
+            <form action="/optimize" method="post" enctype="multipart/form-data">
 
-.info {
-    background: #eef6ff;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
-}
+                <label>Upload Resume PDF</label>
 
-</style>
+                <input
+                    type="file"
+                    name="resume"
+                    accept=".pdf"
+                    required
+                >
 
-</head>
+                <label>Job Description</label>
 
-<body>
+                <textarea
+                    name="job_description"
+                    placeholder="Paste the job description here..."
+                    required
+                ></textarea>
 
-<div class="container">
+                <button type="submit">
+                    Optimize Resume
+                </button>
 
-<h1>
-Universal AI Resume Suite
-</h1>
+            </form>
 
-<p>
-Upload your resume and paste the job description.
-The system will automatically analyze and optimize
-your resume for the job.
-</p>
+        </div>
 
-<form
-action="/optimize"
-method="post"
-enctype="multipart/form-data"
->
-
-<label>
-Resume PDF
-</label>
-
-<input
-type="file"
-name="resume"
-accept=".pdf"
-required
->
-
-<label>
-Job Description
-</label>
-
-<textarea
-name="job_description"
-placeholder="Paste the complete job description here..."
-required
-></textarea>
-
-<button type="submit">
-Optimize Resume
-</button>
-
-</form>
-
-<div class="info">
-
-<strong>Safety:</strong>
-
-The optimizer does not intentionally invent
-skills or experience that are not supported
-by the original resume.
-
-</div>
-
-</div>
-
-</body>
-
-</html>
-"""
-    )
+    </body>
+    </html>
+    """
 
 
 # ============================================================
-# OPTIMIZE RESUME
+# OPTIMIZE
 # ============================================================
 
-@app.post(
-    "/optimize",
-    response_class=HTMLResponse
-)
+@app.post("/optimize", response_class=HTMLResponse)
 async def optimize(
-
     resume: UploadFile = File(...),
-
     job_description: str = Form(...)
 ):
 
-    filename = resume.filename or ""
-
-    if not filename.lower().endswith(".pdf"):
+    if not resume.filename.lower().endswith(".pdf"):
 
         return HTMLResponse(
-            """
-            <h2>Please upload a PDF resume.</h2>
-            <a href="/">Go Back</a>
-            """,
+            "<h2>Please upload a PDF resume.</h2>",
             status_code=400
         )
 
-    data = await resume.read()
+    file_bytes = await resume.read()
 
-    if not data:
+    original_text = extract_pdf_text(file_bytes)
+
+    if not original_text.strip():
 
         return HTMLResponse(
-            """
-            <h2>The uploaded resume is empty.</h2>
-            <a href="/">Go Back</a>
-            """,
+            "<h2>Could not read text from this PDF.</h2>"
+            "<p>Please upload a text-based PDF.</p>",
             status_code=400
         )
 
-    resume_text = extract_pdf_text(data)
-
-    if not resume_text.strip():
-
-        return HTMLResponse(
-            """
-            <h2>Could not read text from this PDF.</h2>
-            <p>
-            Please upload a text-based PDF.
-            Scanned-image PDFs require OCR.
-            </p>
-            <a href="/">Go Back</a>
-            """,
-            status_code=400
-        )
-
-    resume_text = clean_text(resume_text)
-
-    job_description = clean_text(
+    # Find job keywords
+    job_keywords, missing_keywords = find_missing_keywords(
+        original_text,
         job_description
     )
 
-    # --------------------------------------------------------
-    # ANALYZE FORMAT
-    # --------------------------------------------------------
-
-    format_score, problems = analyze_format(
-        resume_text
-    )
-
-    # --------------------------------------------------------
-    # FIND KEYWORDS
-    # --------------------------------------------------------
-
-    resume_keywords = find_skills(
-        resume_text
-    )
-
-    job_keywords = extract_job_keywords(
-        job_description
-    )
-
-    matched_keywords = sorted(
-        set(resume_keywords)
-        &
-        set(job_keywords)
-    )
-
-    missing_keywords = find_missing_keywords(
-        resume_text,
-        job_description
-    )
-
-    # --------------------------------------------------------
-    # ATS SCORE
-    # --------------------------------------------------------
-
-    if job_keywords:
-
-        ats_score = round(
-            (
-                len(matched_keywords)
-                /
-                len(job_keywords)
-            )
-            * 100
-        )
-
-    else:
-
-        ats_score = 0
-
-    final_score = round(
-        (
-            ats_score * 0.65
-        )
-        +
-        (
-            format_score * 0.35
-        )
-    )
-
-    # --------------------------------------------------------
-    # BUILD OPTIMIZED RESUME
-    # --------------------------------------------------------
-
-    optimized_text = build_optimized_resume(
-        resume_text,
+    # Build corrected resume
+    optimized_text, added_keywords = build_optimized_resume(
+        original_text,
         missing_keywords
     )
 
-    # --------------------------------------------------------
-    # HTML DATA
-    # --------------------------------------------------------
-
-    matched_html = "".join(
-
-        f"<li>{html.escape(skill.title())}</li>"
-
-        for skill in matched_keywords
-    )
-
-    missing_html = "".join(
-
-        f"<li>{html.escape(skill.title())}</li>"
-
-        for skill in missing_keywords
-    )
-
-    problems_html = "".join(
-
-        f"<li>{html.escape(problem)}</li>"
-
-        for problem in problems
-    )
-
-    if not matched_html:
-
-        matched_html = (
-            "<li>No matching keywords found.</li>"
-        )
-
-    if not missing_html:
-
-        missing_html = (
-            "<li>No safe missing keywords detected.</li>"
-        )
-
-    if not problems_html:
-
-        problems_html = (
-            "<li>No major format issues detected.</li>"
-        )
-
-    escaped_resume = html.escape(
+    # Calculate scores AFTER correction
+    ats_score = calculate_ats_score(
+        job_keywords,
         optimized_text
     )
 
-    return HTMLResponse(
-
-        f"""
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>
-Resume Optimization Result
-</title>
-
-<style>
-
-body {{
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 30px;
-}}
-
-.container {{
-    max-width: 1000px;
-    margin: auto;
-}}
-
-.card {{
-    background: white;
-    padding: 25px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow: 0 3px 15px rgba(0,0,0,.07);
-}}
-
-.grid {{
-    display: grid;
-    grid-template-columns:
-        repeat(3, 1fr);
-    gap: 15px;
-}}
-
-.score {{
-    font-size: 42px;
-    font-weight: bold;
-}}
-
-.box {{
-    text-align: center;
-}}
-
-textarea {{
-    width: 100%;
-    min-height: 450px;
-    box-sizing: border-box;
-    padding: 15px;
-    font-family: Arial;
-}}
-
-button,
-a {{
-    display: inline-block;
-    padding: 12px 20px;
-    border-radius: 7px;
-    border: none;
-    background: #111827;
-    color: white;
-    text-decoration: none;
-    cursor: pointer;
-}}
-
-button:hover,
-a:hover {{
-    background: #374151;
-}}
-
-@media(max-width:700px) {{
-
-    .grid {{
-        grid-template-columns: 1fr;
-    }}
-
-}}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-<div class="card">
-
-<h1>
-Resume Optimization Complete
-</h1>
-
-<p>
-Your resume has been analyzed against
-the supplied job description.
-</p>
-
-</div>
-
-
-<div class="grid">
-
-<div class="card box">
-
-<h3>
-ATS Match
-</h3>
-
-<div class="score">
-{ats_score}%
-</div>
-
-</div>
-
-
-<div class="card box">
-
-<h3>
-Format Score
-</h3>
-
-<div class="score">
-{format_score}%
-</div>
-
-</div>
-
-
-<div class="card box">
-
-<h3>
-Final Score
-</h3>
-
-<div class="score">
-{final_score}%
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Matched Job Keywords
-</h2>
-
-<ul>
-{matched_html}
-</ul>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Automatically Added Keywords
-</h2>
-
-<ul>
-{missing_html}
-</ul>
-
-<p>
-Supported keywords are added to the
-optimized resume without changing the
-original uploaded file.
-</p>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Format Analysis
-</h2>
-
-<ul>
-{problems_html}
-</ul>
-
-</div>
-
-
-<div class="card">
-
-<h2>
-Optimized Resume
-</h2>
-
-<textarea readonly>
-{escaped_resume}
-</textarea>
-
-<br>
-<br>
-
-<form
-action="/download-docx"
-method="post"
->
-
-<textarea
-name="resume_text"
-style="display:none;"
->{escaped_resume}</textarea>
-
-<button type="submit">
-Download Optimized DOCX
-</button>
-
-</form>
-
-</div>
-
-
-<div class="card">
-
-<a href="/">
-Upload Another Resume
-</a>
-
-</div>
-
-</div>
-
-</body>
-
-</html>
-"""
+    format_problems = analyze_format(original_text)
+
+    format_score = max(
+        0,
+        100 - (len(format_problems) * 10)
     )
+
+    final_score = round(
+        (ats_score * 0.7) +
+        (format_score * 0.3)
+    )
+
+    # --------------------------------------------------------
+    # IMPORTANT:
+    # The page shows ONLY the corrected resume.
+    # The original resume is never displayed.
+    # --------------------------------------------------------
+
+    safe_resume = html.escape(optimized_text)
+
+    matched_keywords = [
+        keyword
+        for keyword in job_keywords
+        if keyword_exists(optimized_text, keyword)
+    ]
+
+    matched_html = "".join(
+        f"<li>{html.escape(k)}</li>"
+        for k in matched_keywords
+    )
+
+    added_html = "".join(
+        f"<li>{html.escape(k)} → {html.escape(get_section_for_keyword(k))}</li>"
+        for k in added_keywords
+    )
+
+    if not added_html:
+
+        added_html = "<li>No new keywords were added.</li>"
+
+    format_html = "".join(
+        f"<li>{html.escape(problem)}</li>"
+        for problem in format_problems
+    )
+
+    if not format_html:
+
+        format_html = "<li>No major format problems detected.</li>"
+
+    # Store optimized text in a simple encoded form
+    import base64
+
+    encoded_resume = base64.b64encode(
+        optimized_text.encode("utf-8")
+    ).decode("utf-8")
+
+    return f"""
+    <!DOCTYPE html>
+
+    <html>
+
+    <head>
+
+        <title>Resume Optimization Complete</title>
+
+        <style>
+
+        body {{
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            padding: 30px;
+        }}
+
+        .container {{
+            max-width: 1100px;
+            margin: auto;
+        }}
+
+        .card {{
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+        }}
+
+        .scores {{
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }}
+
+        .score {{
+            flex: 1;
+            min-width: 180px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f0f2f5;
+            text-align: center;
+        }}
+
+        .score h2 {{
+            margin: 0;
+            font-size: 32px;
+        }}
+
+        .resume {{
+            white-space: pre-wrap;
+            background: #fafafa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            line-height: 1.5;
+        }}
+
+        button {{
+            padding: 13px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #111827;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+            margin-right: 10px;
+        }}
+
+        </style>
+
+    </head>
+
+    <body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <h1>Resume Optimization Complete</h1>
+
+            <p>
+            Your resume has been automatically corrected against the supplied job description.
+            </p>
+
+        </div>
+
+        <div class="scores">
+
+            <div class="score">
+                <h2>{ats_score}%</h2>
+                <p>ATS Match</p>
+            </div>
+
+            <div class="score">
+                <h2>{format_score}%</h2>
+                <p>Format Score</p>
+            </div>
+
+            <div class="score">
+                <h2>{final_score}%</h2>
+                <p>Final Score</p>
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Matched Job Keywords</h2>
+
+            <ul>
+                {matched_html}
+            </ul>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Automatically Added Keywords</h2>
+
+            <ul>
+                {added_html}
+            </ul>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Format Analysis</h2>
+
+            <ul>
+                {format_html}
+            </ul>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Corrected Resume</h2>
+
+            <div class="resume">
+{safe_resume}
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <form action="/download-docx" method="post">
+
+                <input
+                    type="hidden"
+                    name="resume_text"
+                    value="{html.escape(encoded_resume)}"
+                >
+
+                <button type="submit">
+                    Download Corrected DOCX
+                </button>
+
+            </form>
+
+            <br><br>
+
+            <a href="/">
+                Upload Another Resume
+            </a>
+
+        </div>
+
+    </div>
+
+    </body>
+
+    </html>
+    """
 
 
 # ============================================================
-# DOWNLOAD OPTIMIZED DOCX
+# DOWNLOAD DOCX
 # ============================================================
 
 @app.post("/download-docx")
-async def download_docx(
-    resume_text: str = Form(...)
-):
+async def download_docx(resume_text: str = Form(...)):
 
-    resume_text = html.unescape(
-        resume_text
-    )
+    import base64
 
-    file = create_docx(
-        resume_text
-    )
+    try:
+
+        decoded = base64.b64decode(
+            resume_text
+        ).decode("utf-8")
+
+    except Exception:
+
+        decoded = resume_text
+
+    document = create_docx(decoded)
 
     return StreamingResponse(
-
-        file,
-
-        media_type=(
-            "application/vnd.openxmlformats-officedocument."
-            "wordprocessingml.document"
-        ),
-
+        document,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={
             "Content-Disposition":
-            'attachment; filename="optimized_resume.docx"'
+            "attachment; filename=optimized_resume.docx"
         }
     )
 
@@ -1290,9 +995,9 @@ async def download_docx(
 # ============================================================
 
 @app.get("/health")
-async def health():
+def health():
 
     return {
-        "status": "ok",
-        "application": "Universal AI Resume Suite"
+        "status": "healthy",
+        "service": "Universal AI Resume Suite"
     }
