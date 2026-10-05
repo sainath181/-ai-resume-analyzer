@@ -1,12 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from pypdf import PdfReader
 
 import io
 import re
 import html
+import base64
 
 app = FastAPI(title="Universal AI Resume Suite")
 
@@ -23,8 +25,8 @@ KEYWORD_GROUPS = {
     ],
 
     "Web Technologies": [
-        "html", "html5", "css", "css3", "javascript", "react",
-        "react.js", "reactjs", "angular", "vue", "vue.js",
+        "html", "html5", "css", "css3", "javascript",
+        "react", "react.js", "reactjs", "angular", "vue", "vue.js",
         "node.js", "nodejs", "express", "express.js",
         "bootstrap", "tailwind", "next.js", "nextjs",
         "django", "flask", "fastapi", "rest api", "restful api"
@@ -63,7 +65,7 @@ KEYWORD_GROUPS = {
     "Business": [
         "sales", "marketing", "finance", "accounting", "excel",
         "microsoft excel", "power bi", "tableau", "business analysis",
-        "project management", "communication", "leadership"
+        "project management"
     ],
 
     "Pharmacy": [
@@ -81,7 +83,81 @@ KEYWORD_GROUPS = {
 }
 
 
-SECTION_ALIASES = {
+# ============================================================
+# STANDARD CAPITALIZATION
+# ============================================================
+
+STANDARD_NAMES = {
+    "python": "Python",
+    "java": "Java",
+    "c": "C",
+    "c++": "C++",
+    "c#": "C#",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
+    "html": "HTML",
+    "html5": "HTML5",
+    "css": "CSS",
+    "css3": "CSS3",
+    "react": "React",
+    "react.js": "React.js",
+    "reactjs": "React.js",
+    "angular": "Angular",
+    "vue": "Vue.js",
+    "vue.js": "Vue.js",
+    "node.js": "Node.js",
+    "nodejs": "Node.js",
+    "express": "Express.js",
+    "express.js": "Express.js",
+    "django": "Django",
+    "flask": "Flask",
+    "fastapi": "FastAPI",
+    "sql": "SQL",
+    "mysql": "MySQL",
+    "postgresql": "PostgreSQL",
+    "postgres": "PostgreSQL",
+    "mongodb": "MongoDB",
+    "oracle": "Oracle",
+    "sqlite": "SQLite",
+    "redis": "Redis",
+    "firebase": "Firebase",
+    "git": "Git",
+    "github": "GitHub",
+    "gitlab": "GitLab",
+    "docker": "Docker",
+    "postman": "Postman",
+    "jira": "Jira",
+    "jenkins": "Jenkins",
+    "linux": "Linux",
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "GCP",
+    "kubernetes": "Kubernetes",
+    "terraform": "Terraform",
+    "ai": "AI",
+    "artificial intelligence": "Artificial Intelligence",
+    "machine learning": "Machine Learning",
+    "ml": "ML",
+    "deep learning": "Deep Learning",
+    "nlp": "NLP",
+    "pandas": "Pandas",
+    "numpy": "NumPy",
+    "scikit-learn": "Scikit-learn",
+    "tensorflow": "TensorFlow",
+    "pytorch": "PyTorch",
+    "opencv": "OpenCV",
+    "matlab": "MATLAB",
+    "excel": "Excel",
+    "power bi": "Power BI",
+    "tableau": "Tableau",
+}
+
+
+# ============================================================
+# SECTION NAMES
+# ============================================================
+
+SECTION_NAMES = {
     "summary": [
         "summary",
         "professional summary",
@@ -89,12 +165,14 @@ SECTION_ALIASES = {
         "career objective",
         "objective"
     ],
+
     "skills": [
         "skills",
         "technical skills",
         "key skills",
         "technical expertise"
     ],
+
     "experience": [
         "experience",
         "work experience",
@@ -103,23 +181,27 @@ SECTION_ALIASES = {
         "internship",
         "internships"
     ],
+
     "projects": [
         "project",
         "projects",
         "academic projects",
         "personal projects"
     ],
+
     "education": [
         "education",
         "academic qualification",
         "qualifications"
     ],
+
     "certifications": [
         "certification",
         "certifications",
         "courses",
         "training"
     ],
+
     "activities": [
         "activities",
         "interests",
@@ -130,12 +212,13 @@ SECTION_ALIASES = {
 
 
 # ============================================================
-# BASIC FUNCTIONS
+# TEXT FUNCTIONS
 # ============================================================
 
 def normalize(text):
     text = text.lower()
-    text = text.replace("–", "-").replace("—", "-")
+    text = text.replace("–", "-")
+    text = text.replace("—", "-")
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -154,8 +237,7 @@ def extract_pdf_text(file_bytes):
 
     for page in reader.pages:
         try:
-            text = page.extract_text() or ""
-            pages.append(text)
+            pages.append(page.extract_text() or "")
         except Exception:
             pages.append("")
 
@@ -163,34 +245,36 @@ def extract_pdf_text(file_bytes):
 
 
 # ============================================================
-# KEYWORD MATCHING
+# KEYWORD DETECTION
 # ============================================================
 
 def keyword_exists(text, keyword):
+
     text = normalize(text)
     keyword = normalize(keyword)
 
-    if keyword == "c":
-        return bool(re.search(r"\b(c)\b", text))
+    if keyword in ["c", "r"]:
+        return bool(re.search(r"\b" + re.escape(keyword) + r"\b", text))
 
-    if keyword == "r":
-        return bool(re.search(r"\b(r)\b", text))
-
-    escaped = re.escape(keyword)
-
-    return bool(re.search(r"(?<![a-z0-9])" + escaped + r"(?![a-z0-9])", text))
+    return bool(
+        re.search(
+            r"(?<![a-z0-9])" +
+            re.escape(keyword) +
+            r"(?![a-z0-9])",
+            text
+        )
+    )
 
 
 def find_job_keywords(job_description):
-    found = []
 
-    jd = normalize(job_description)
+    found = []
 
     for group, keywords in KEYWORD_GROUPS.items():
 
         for keyword in keywords:
 
-            if keyword_exists(jd, keyword):
+            if keyword_exists(job_description, keyword):
 
                 if keyword not in found:
                     found.append(keyword)
@@ -199,6 +283,7 @@ def find_job_keywords(job_description):
 
 
 def find_missing_keywords(resume_text, job_description):
+
     job_keywords = find_job_keywords(job_description)
 
     missing = []
@@ -206,80 +291,315 @@ def find_missing_keywords(resume_text, job_description):
     for keyword in job_keywords:
 
         if not keyword_exists(resume_text, keyword):
-
             missing.append(keyword)
 
     return job_keywords, missing
 
 
 # ============================================================
-# SECTION DETECTION
+# SECTION / CATEGORY
 # ============================================================
 
-def find_existing_section(text, section_type):
+def get_keyword_group(keyword):
+
+    keyword = normalize(keyword)
+
+    for group, keywords in KEYWORD_GROUPS.items():
+
+        if keyword in [normalize(x) for x in keywords]:
+            return group
+
+    return "Programming Languages"
+
+
+def display_keyword(keyword):
+
+    keyword = normalize(keyword)
+
+    return STANDARD_NAMES.get(
+        keyword,
+        keyword.title()
+    )
+
+
+# ============================================================
+# FORMAT / TEXT CORRECTION
+# ============================================================
+
+def fix_common_formatting(text):
+
+    corrections = 0
+
+    # Remove repeated spaces
+    new_text = re.sub(r"[ \t]+", " ", text)
+
+    if new_text != text:
+        corrections += 1
+
+    text = new_text
+
+    # Fix spaces before punctuation
+    new_text = re.sub(r"\s+([,.;:])", r"\1", text)
+
+    if new_text != text:
+        corrections += 1
+
+    text = new_text
+
+    # Normalize bullet characters
+    text = text.replace("• •", "•")
+    text = text.replace("·", "•")
+
+    # Remove excessive blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text, corrections
+
+
+def fix_keyword_capitalization(text):
+
+    corrections = 0
+
+    # Longest keywords first
+    names = sorted(
+        STANDARD_NAMES.items(),
+        key=lambda x: len(x[0]),
+        reverse=True
+    )
+
+    for wrong, correct in names:
+
+        pattern = re.compile(
+            r"(?<![A-Za-z0-9])" +
+            re.escape(wrong) +
+            r"(?![A-Za-z0-9])",
+            re.IGNORECASE
+        )
+
+        new_text = pattern.sub(correct, text)
+
+        if new_text != text:
+            corrections += 1
+            text = new_text
+
+    return text, corrections
+
+
+# ============================================================
+# ADD MISSING KEYWORDS
+# ============================================================
+
+def add_missing_keywords(text, missing_keywords):
 
     lines = text.splitlines()
 
-    aliases = SECTION_ALIASES.get(section_type, [])
+    # Find skills section
+    skills_index = -1
 
     for i, line in enumerate(lines):
 
         clean = normalize(line)
 
-        for alias in aliases:
+        if clean in [
+            "skills",
+            "technical skills",
+            "key skills",
+            "technical expertise"
+        ]:
 
-            if clean == alias:
-                return i
+            skills_index = i
+            break
 
-            if clean.startswith(alias + ":"):
-                return i
+    # If no skills section exists
+    if skills_index == -1:
 
-    return -1
+        skills_index = 0
 
-
-def get_section_for_keyword(keyword):
-
-    keyword = normalize(keyword)
-
-    for section, keywords in KEYWORD_GROUPS.items():
-
-        for item in keywords:
-
-            if keyword == normalize(item):
-                return section
-
-    return "Skills"
-
-
-# ============================================================
-# FORMAT ANALYSIS
-# ============================================================
-
-def analyze_format(resume_text):
-
-    problems = []
-
-    lower = normalize(resume_text)
-
-    if not any(x in lower for x in SECTION_ALIASES["experience"]):
-        problems.append(
-            "Missing or unclear section: experience / work experience / employment / internship"
+        lines.insert(
+            0,
+            "TECHNICAL SKILLS"
         )
 
-    if not any(x in lower for x in SECTION_ALIASES["education"]):
-        problems.append("Missing or unclear Education section")
+        lines.insert(
+            1,
+            "Programming Languages: "
+        )
 
-    if not any(x in lower for x in SECTION_ALIASES["skills"]):
-        problems.append("Missing or unclear Skills section")
+    added = []
 
-    return problems
+    for keyword in missing_keywords:
+
+        display = display_keyword(keyword)
+
+        group = get_keyword_group(keyword)
+
+        found = False
+
+        # Search for existing category
+        for i in range(
+            skills_index + 1,
+            min(skills_index + 50, len(lines))
+        ):
+
+            lower = normalize(lines[i])
+
+            category_variants = {
+                "Programming Languages": [
+                    "programming languages:",
+                    "programming language:"
+                ],
+
+                "Web Technologies": [
+                    "web technologies:",
+                    "web technology:"
+                ],
+
+                "Database": [
+                    "database:",
+                    "databases:"
+                ],
+
+                "Tools": [
+                    "tools:",
+                    "software:"
+                ],
+
+                "Cloud": [
+                    "cloud:",
+                    "cloud technologies:"
+                ],
+
+                "AI & Data": [
+                    "ai & data:",
+                    "ai:",
+                    "data:"
+                ],
+
+                "Engineering": [
+                    "engineering:"
+                ],
+
+                "Business": [
+                    "business:"
+                ],
+
+                "Pharmacy": [
+                    "pharmacy:"
+                ],
+
+                "Soft Skills": [
+                    "soft skills:"
+                ]
+            }
+
+            variants = category_variants.get(
+                group,
+                []
+            )
+
+            if any(lower.startswith(v) for v in variants):
+
+                if normalize(display) not in lower:
+
+                    lines[i] = (
+                        lines[i].rstrip() +
+                        ", " +
+                        display
+                    )
+
+                    added.append(display)
+
+                found = True
+                break
+
+        # Category does not exist
+        if not found:
+
+            # Find next major section
+            insert_at = len(lines)
+
+            for i in range(
+                skills_index + 1,
+                len(lines)
+            ):
+
+                lower = normalize(lines[i])
+
+                if lower in [
+                    "experience",
+                    "work experience",
+                    "education",
+                    "projects",
+                    "project",
+                    "certifications",
+                    "activities",
+                    "activities & interests"
+                ]:
+
+                    insert_at = i
+                    break
+
+            lines.insert(
+                insert_at,
+                f"{group}: {display}"
+            )
+
+            added.append(display)
+
+    return "\n".join(lines), added
+
+
+# ============================================================
+# FORMAT SCORE
+# ============================================================
+
+def analyze_resume_format(text):
+
+    issues = []
+    score = 100
+
+    lower = normalize(text)
+
+    # Missing sections
+    if not any(
+        x in lower
+        for x in SECTION_NAMES["skills"]
+    ):
+        issues.append("Skills section is missing.")
+        score -= 10
+
+    if not any(
+        x in lower
+        for x in SECTION_NAMES["education"]
+    ):
+        issues.append("Education section is missing.")
+        score -= 10
+
+    # Broken spacing
+    if re.search(r"[ \t]{2,}", text):
+        issues.append("Extra spacing detected.")
+        score -= 5
+
+    # Excessive blank lines
+    if re.search(r"\n{4,}", text):
+        issues.append("Excessive blank lines detected.")
+        score -= 5
+
+    # Broken bullets
+    if "• •" in text:
+        issues.append("Broken bullet formatting detected.")
+        score -= 5
+
+    score = max(score, 0)
+
+    return score, issues
 
 
 # ============================================================
 # ATS SCORE
 # ============================================================
 
-def calculate_ats_score(job_keywords, resume_text):
+def calculate_ats(job_keywords, corrected_resume):
 
     if not job_keywords:
         return 0
@@ -288,279 +608,139 @@ def calculate_ats_score(job_keywords, resume_text):
 
     for keyword in job_keywords:
 
-        if keyword_exists(resume_text, keyword):
+        if keyword_exists(
+            corrected_resume,
+            keyword
+        ):
             matched += 1
 
-    return round((matched / len(job_keywords)) * 100)
+    return round(
+        (matched / len(job_keywords)) * 100
+    )
 
 
 # ============================================================
-# ADD KEYWORDS TO CORRECT PLACE
-# ============================================================
-
-def add_keyword_to_skills_section(text, keyword):
-
-    lines = text.splitlines()
-
-    skills_index = find_existing_section(text, "skills")
-
-    if skills_index == -1:
-
-        # Add a Skills section near the beginning
-        new_text = (
-            "SKILLS\n"
-            "=======\n"
-            f"Programming Languages: {keyword}\n\n"
-            + text
-        )
-
-        return new_text
-
-    target_section = get_section_for_keyword(keyword)
-
-    # Find existing target line
-    for i in range(skills_index + 1, min(skills_index + 40, len(lines))):
-
-        line = lines[i].strip()
-
-        lower_line = normalize(line)
-
-        if target_section == "Programming Languages":
-
-            if (
-                lower_line.startswith("programming languages:")
-                or lower_line.startswith("programming language:")
-                or lower_line.startswith("languages:")
-            ):
-
-                if keyword.lower() not in lower_line:
-
-                    lines[i] = line.rstrip() + ", " + keyword
-
-                    return "\n".join(lines)
-
-        elif target_section == "Web Technologies":
-
-            if (
-                lower_line.startswith("web technologies:")
-                or lower_line.startswith("web technology:")
-                or lower_line.startswith("frontend:")
-                or lower_line.startswith("front end:")
-            ):
-
-                if keyword.lower() not in lower_line:
-
-                    lines[i] = line.rstrip() + ", " + keyword
-
-                    return "\n".join(lines)
-
-        elif target_section == "Database":
-
-            if (
-                lower_line.startswith("database:")
-                or lower_line.startswith("databases:")
-                or lower_line.startswith("database technologies:")
-            ):
-
-                if keyword.lower() not in lower_line:
-
-                    lines[i] = line.rstrip() + ", " + keyword
-
-                    return "\n".join(lines)
-
-        elif target_section == "Tools":
-
-            if (
-                lower_line.startswith("tools:")
-                or lower_line.startswith("software:")
-                or lower_line.startswith("tools & technologies:")
-            ):
-
-                if keyword.lower() not in lower_line:
-
-                    lines[i] = line.rstrip() + ", " + keyword
-
-                    return "\n".join(lines)
-
-        elif target_section == "Cloud":
-
-            if (
-                lower_line.startswith("cloud:")
-                or lower_line.startswith("cloud technologies:")
-                or lower_line.startswith("cloud platforms:")
-            ):
-
-                if keyword.lower() not in lower_line:
-
-                    lines[i] = line.rstrip() + ", " + keyword
-
-                    return "\n".join(lines)
-
-    # If exact category line doesn't exist,
-    # add a new category inside Skills.
-
-    insert_position = skills_index + 1
-
-    category_order = [
-        "Programming Languages",
-        "Web Technologies",
-        "Database",
-        "Tools",
-        "Cloud",
-        "AI & Data",
-        "Engineering",
-        "Business",
-        "Pharmacy",
-        "Soft Skills"
-    ]
-
-    # Find end of Skills section
-    end_position = len(lines)
-
-    for i in range(skills_index + 1, len(lines)):
-
-        lower = normalize(lines[i])
-
-        for section_aliases in SECTION_ALIASES.values():
-
-            for alias in section_aliases:
-
-                if lower == alias and i > skills_index + 1:
-                    end_position = i
-                    break
-
-            if end_position != len(lines):
-                break
-
-        if end_position != len(lines):
-            break
-
-    category_line = f"{target_section}: {keyword}"
-
-    lines.insert(end_position, category_line)
-
-    return "\n".join(lines)
-
-
-def add_keyword_to_resume(text, keyword):
-
-    target = get_section_for_keyword(keyword)
-
-    # Important:
-    # Only automatically add technical/job keywords.
-    # Do not fabricate experience.
-
-    if target in [
-        "Programming Languages",
-        "Web Technologies",
-        "Database",
-        "Tools",
-        "Cloud",
-        "AI & Data",
-        "Engineering",
-        "Business",
-        "Pharmacy",
-        "Soft Skills"
-    ]:
-
-        return add_keyword_to_skills_section(text, keyword)
-
-    return text
-
-
-# ============================================================
-# BUILD OPTIMIZED RESUME
-# ============================================================
-
-def build_optimized_resume(resume_text, missing_keywords):
-
-    optimized = resume_text
-
-    added = []
-
-    for keyword in missing_keywords:
-
-        before = optimized
-
-        optimized = add_keyword_to_resume(
-            optimized,
-            keyword
-        )
-
-        if optimized != before:
-
-            added.append(keyword)
-
-    return optimized, added
-
-
-# ============================================================
-# CREATE DOCX
+# CREATE CLEAN DOCX
 # ============================================================
 
 def create_docx(text):
 
     document = Document()
 
-    normal_style = document.styles["Normal"]
+    section = document.sections[0]
 
-    normal_style.font.name = "Arial"
-    normal_style.font.size = Pt(10)
+    section.top_margin = Inches(0.55)
+    section.bottom_margin = Inches(0.55)
+    section.left_margin = Inches(0.65)
+    section.right_margin = Inches(0.65)
+
+    style = document.styles["Normal"]
+
+    style.font.name = "Arial"
+    style.font.size = Pt(10)
 
     for line in text.splitlines():
 
-        line = line.rstrip()
+        line = line.strip()
 
         if not line:
-            document.add_paragraph()
             continue
 
+        upper = line.upper()
+
         # Main headings
-        upper = line.upper().strip()
+        if upper in [
+            "SUMMARY",
+            "CAREER OBJECTIVE",
+            "EDUCATION",
+            "EXPERIENCE",
+            "WORK EXPERIENCE",
+            "PROJECTS",
+            "PROJECT",
+            "TECHNICAL SKILLS",
+            "SKILLS",
+            "CERTIFICATIONS",
+            "ACTIVITIES & INTERESTS",
+            "INTERESTS",
+            "HOBBIES"
+        ]:
 
-        if (
-            upper in [
-                "SKILLS",
-                "EDUCATION",
-                "EXPERIENCE",
-                "WORK EXPERIENCE",
-                "PROJECTS",
-                "CERTIFICATIONS",
-                "ACTIVITIES & INTERESTS",
-                "SUMMARY",
-                "CAREER OBJECTIVE"
-            ]
-        ):
+            paragraph = document.add_paragraph()
 
-            p = document.add_paragraph()
+            paragraph.paragraph_format.space_before = Pt(7)
+            paragraph.paragraph_format.space_after = Pt(3)
 
-            run = p.add_run(line)
+            run = paragraph.add_run(
+                line.upper()
+            )
 
             run.bold = True
             run.font.size = Pt(12)
 
-        elif (
-            line.startswith("Programming Languages:")
-            or line.startswith("Web Technologies:")
-            or line.startswith("Database:")
-            or line.startswith("Tools:")
-            or line.startswith("Cloud:")
-            or line.startswith("AI & Data:")
-            or line.startswith("Engineering:")
-            or line.startswith("Business:")
-            or line.startswith("Pharmacy:")
-            or line.startswith("Soft Skills:")
+            continue
+
+        # Skill categories
+        skill_groups = [
+            "Programming Languages:",
+            "Web Technologies:",
+            "Database:",
+            "Tools:",
+            "Cloud:",
+            "AI & Data:",
+            "Engineering:",
+            "Business:",
+            "Pharmacy:",
+            "Soft Skills:"
+        ]
+
+        if any(
+            line.startswith(x)
+            for x in skill_groups
         ):
 
-            p = document.add_paragraph()
+            paragraph = document.add_paragraph()
 
-            run = p.add_run(line)
+            paragraph.paragraph_format.space_after = Pt(2)
+
+            first, rest = line.split(
+                ":",
+                1
+            )
+
+            run = paragraph.add_run(
+                first + ":"
+            )
 
             run.bold = True
 
+            paragraph.add_run(
+                rest
+            )
+
+            continue
+
+        paragraph = document.add_paragraph()
+
+        paragraph.paragraph_format.space_after = Pt(2)
+
+        # Convert bullet lines
+        if line.startswith(("•", "-", "*")):
+
+            line = re.sub(
+                r"^[•\-\*]\s*",
+                "",
+                line
+            )
+
+            paragraph.style = document.styles["Normal"]
+
+            paragraph.add_run(
+                "• " + line
+            )
+
         else:
 
-            document.add_paragraph(line)
+            paragraph.add_run(line)
 
     output = io.BytesIO()
 
@@ -572,7 +752,7 @@ def create_docx(text):
 
 
 # ============================================================
-# HOME PAGE
+# HOME
 # ============================================================
 
 @app.get("/", response_class=HTMLResponse)
@@ -580,99 +760,108 @@ def home():
 
     return """
     <!DOCTYPE html>
+
     <html>
+
     <head>
-        <title>Universal AI Resume Suite</title>
 
-        <style>
+    <title>Universal AI Resume Suite</title>
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            padding: 40px;
-        }
+    <style>
 
-        .box {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 35px;
-            border-radius: 15px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
-        }
+    body {
+        font-family: Arial;
+        background: #f4f6f8;
+        padding: 40px;
+    }
 
-        h1 {
-            text-align: center;
-        }
+    .box {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 35px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
 
-        label {
-            display: block;
-            margin-top: 20px;
-            font-weight: bold;
-        }
+    h1 {
+        text-align: center;
+    }
 
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
+    label {
+        display: block;
+        margin-top: 20px;
+        font-weight: bold;
+    }
 
-        textarea {
-            height: 220px;
-        }
+    input, textarea {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 8px;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
 
-        button {
-            margin-top: 25px;
-            width: 100%;
-            padding: 14px;
-            background: #111827;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+    textarea {
+        height: 220px;
+    }
 
-        </style>
+    button {
+        width: 100%;
+        padding: 15px;
+        margin-top: 25px;
+        border: none;
+        border-radius: 8px;
+        background: #111827;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    </style>
+
     </head>
 
     <body>
 
-        <div class="box">
+    <div class="box">
 
-            <h1>Universal AI Resume Suite</h1>
+    <h1>Universal AI Resume Suite</h1>
 
-            <form action="/optimize" method="post" enctype="multipart/form-data">
+    <form
+        action="/optimize"
+        method="post"
+        enctype="multipart/form-data"
+    >
 
-                <label>Upload Resume PDF</label>
+        <label>Upload Resume PDF</label>
 
-                <input
-                    type="file"
-                    name="resume"
-                    accept=".pdf"
-                    required
-                >
+        <input
+            type="file"
+            name="resume"
+            accept=".pdf"
+            required
+        >
 
-                <label>Job Description</label>
+        <label>Paste Job Description</label>
 
-                <textarea
-                    name="job_description"
-                    placeholder="Paste the job description here..."
-                    required
-                ></textarea>
+        <textarea
+            name="job_description"
+            placeholder="Paste the complete job description here..."
+            required
+        ></textarea>
 
-                <button type="submit">
-                    Optimize Resume
-                </button>
+        <button type="submit">
+            Analyze & Correct Resume
+        </button>
 
-            </form>
+    </form>
 
-        </div>
+    </div>
 
     </body>
+
     </html>
     """
 
@@ -696,89 +885,158 @@ async def optimize(
 
     file_bytes = await resume.read()
 
-    original_text = extract_pdf_text(file_bytes)
+    original_text = extract_pdf_text(
+        file_bytes
+    )
 
     if not original_text.strip():
 
         return HTMLResponse(
-            "<h2>Could not read text from this PDF.</h2>"
-            "<p>Please upload a text-based PDF.</p>",
+            """
+            <h2>Unable to read this PDF.</h2>
+            <p>Please upload a text-based PDF.</p>
+            """,
             status_code=400
         )
 
-    # Find job keywords
-    job_keywords, missing_keywords = find_missing_keywords(
-        original_text,
+    # --------------------------------------------------------
+    # STEP 1: FIND JOB KEYWORDS
+    # --------------------------------------------------------
+
+    job_keywords = find_job_keywords(
         job_description
     )
 
-    # Build corrected resume
-    optimized_text, added_keywords = build_optimized_resume(
-        original_text,
-        missing_keywords
-    )
+    # --------------------------------------------------------
+    # STEP 2: FIND MISSING KEYWORDS
+    # --------------------------------------------------------
 
-    # Calculate scores AFTER correction
-    ats_score = calculate_ats_score(
+    missing_keywords = []
+
+    for keyword in job_keywords:
+
+        if not keyword_exists(
+            original_text,
+            keyword
+        ):
+
+            missing_keywords.append(
+                keyword
+            )
+
+    # --------------------------------------------------------
+    # STEP 3: FIX FORMATTING
+    # --------------------------------------------------------
+
+    corrected_text, formatting_corrections = \
+        fix_common_formatting(
+            original_text
+        )
+
+    # --------------------------------------------------------
+    # STEP 4: FIX CAPITALIZATION
+    # --------------------------------------------------------
+
+    corrected_text, capitalization_corrections = \
+        fix_keyword_capitalization(
+            corrected_text
+        )
+
+    # --------------------------------------------------------
+    # STEP 5: ADD MISSING KEYWORDS
+    # --------------------------------------------------------
+
+    corrected_text, added_keywords = \
+        add_missing_keywords(
+            corrected_text,
+            missing_keywords
+        )
+
+    # --------------------------------------------------------
+    # STEP 6: FORMAT ANALYSIS
+    # --------------------------------------------------------
+
+    format_score, format_issues = \
+        analyze_resume_format(
+            corrected_text
+        )
+
+    # --------------------------------------------------------
+    # STEP 7: ATS SCORE
+    # --------------------------------------------------------
+
+    ats_score = calculate_ats(
         job_keywords,
-        optimized_text
+        corrected_text
     )
 
-    format_problems = analyze_format(original_text)
-
-    format_score = max(
-        0,
-        100 - (len(format_problems) * 10)
-    )
+    # --------------------------------------------------------
+    # FINAL SCORE
+    # --------------------------------------------------------
 
     final_score = round(
         (ats_score * 0.7) +
         (format_score * 0.3)
     )
 
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # The page shows ONLY the corrected resume.
-    # The original resume is never displayed.
-    # --------------------------------------------------------
-
-    safe_resume = html.escape(optimized_text)
-
-    matched_keywords = [
-        keyword
-        for keyword in job_keywords
-        if keyword_exists(optimized_text, keyword)
-    ]
-
-    matched_html = "".join(
-        f"<li>{html.escape(k)}</li>"
-        for k in matched_keywords
+    total_corrections = (
+        formatting_corrections +
+        capitalization_corrections +
+        len(added_keywords)
     )
 
-    added_html = "".join(
-        f"<li>{html.escape(k)} → {html.escape(get_section_for_keyword(k))}</li>"
-        for k in added_keywords
-    )
+    # --------------------------------------------------------
+    # SAVE CORRECTED RESUME TEMPORARILY IN MEMORY
+    # --------------------------------------------------------
+
+    encoded_resume = base64.b64encode(
+        corrected_text.encode("utf-8")
+    ).decode("utf-8")
+
+    # --------------------------------------------------------
+    # DISPLAY ONLY RESULTS
+    # NEVER DISPLAY RESUME TEXT
+    # --------------------------------------------------------
+
+    added_html = ""
+
+    for keyword in added_keywords:
+
+        added_html += (
+            "<li>" +
+            html.escape(keyword) +
+            " → " +
+            html.escape(
+                get_keyword_group(keyword)
+            ) +
+            "</li>"
+        )
 
     if not added_html:
 
-        added_html = "<li>No new keywords were added.</li>"
+        added_html = (
+            "<li>No new job keywords were required.</li>"
+        )
 
-    format_html = "".join(
-        f"<li>{html.escape(problem)}</li>"
-        for problem in format_problems
-    )
+    issues_html = ""
 
-    if not format_html:
+    for issue in format_issues:
 
-        format_html = "<li>No major format problems detected.</li>"
+        issues_html += (
+            "<li>" +
+            html.escape(issue) +
+            "</li>"
+        )
 
-    # Store optimized text in a simple encoded form
-    import base64
+    if not issues_html:
 
-    encoded_resume = base64.b64encode(
-        optimized_text.encode("utf-8")
-    ).decode("utf-8")
+        issues_html = (
+            "<li>No major formatting problems detected.</li>"
+        )
+
+    # --------------------------------------------------------
+    # RESULT PAGE
+    # --------------------------------------------------------
 
     return f"""
     <!DOCTYPE html>
@@ -787,70 +1045,76 @@ async def optimize(
 
     <head>
 
-        <title>Resume Optimization Complete</title>
+    <title>Resume Optimization Complete</title>
 
-        <style>
+    <style>
 
-        body {{
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            padding: 30px;
-        }}
+    body {{
+        font-family: Arial;
+        background: #f4f6f8;
+        padding: 40px;
+    }}
 
-        .container {{
-            max-width: 1100px;
-            margin: auto;
-        }}
+    .container {{
+        max-width: 900px;
+        margin: auto;
+    }}
 
-        .card {{
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.07);
-        }}
+    .card {{
+        background: white;
+        padding: 30px;
+        margin-bottom: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    }}
 
-        .scores {{
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }}
+    .success {{
+        text-align: center;
+    }}
 
-        .score {{
-            flex: 1;
-            min-width: 180px;
-            padding: 20px;
-            border-radius: 10px;
-            background: #f0f2f5;
-            text-align: center;
-        }}
+    .success h1 {{
+        font-size: 30px;
+    }}
 
-        .score h2 {{
-            margin: 0;
-            font-size: 32px;
-        }}
+    .scores {{
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }}
 
-        .resume {{
-            white-space: pre-wrap;
-            background: #fafafa;
-            padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            line-height: 1.5;
-        }}
+    .score {{
+        flex: 1;
+        min-width: 180px;
+        background: #f1f3f5;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }}
 
-        button {{
-            padding: 13px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #111827;
-            color: white;
-            cursor: pointer;
-            font-size: 15px;
-            margin-right: 10px;
-        }}
+    .score h2 {{
+        font-size: 34px;
+        margin: 0;
+    }}
 
-        </style>
+    .download {{
+        width: 100%;
+        padding: 17px;
+        border: none;
+        border-radius: 9px;
+        background: #111827;
+        color: white;
+        font-size: 17px;
+        cursor: pointer;
+    }}
+
+    .note {{
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }}
+
+    </style>
 
     </head>
 
@@ -858,12 +1122,16 @@ async def optimize(
 
     <div class="container">
 
-        <div class="card">
+        <div class="card success">
 
-            <h1>Resume Optimization Complete</h1>
+            <h1>✅ Resume Optimization Complete</h1>
 
             <p>
-            Your resume has been automatically corrected against the supplied job description.
+            Your resume has been checked and automatically corrected.
+            </p>
+
+            <p>
+            Your original uploaded resume has not been changed.
             </p>
 
         </div>
@@ -871,65 +1139,81 @@ async def optimize(
         <div class="scores">
 
             <div class="score">
+
                 <h2>{ats_score}%</h2>
+
                 <p>ATS Match</p>
+
             </div>
 
             <div class="score">
+
                 <h2>{format_score}%</h2>
+
                 <p>Format Score</p>
+
             </div>
 
             <div class="score">
+
                 <h2>{final_score}%</h2>
+
                 <p>Final Score</p>
+
+            </div>
+
+            <div class="score">
+
+                <h2>{total_corrections}</h2>
+
+                <p>Corrections</p>
+
             </div>
 
         </div>
 
         <div class="card">
 
-            <h2>Matched Job Keywords</h2>
+            <h2>🔑 Automatically Added Keywords</h2>
 
             <ul>
-                {matched_html}
-            </ul>
 
-        </div>
-
-        <div class="card">
-
-            <h2>Automatically Added Keywords</h2>
-
-            <ul>
                 {added_html}
+
             </ul>
 
         </div>
 
         <div class="card">
 
-            <h2>Format Analysis</h2>
+            <h2>📐 Format Check</h2>
 
             <ul>
-                {format_html}
+
+                {issues_html}
+
             </ul>
 
         </div>
 
         <div class="card">
 
-            <h2>Corrected Resume</h2>
+            <h2>📄 Your Resume Is Ready</h2>
 
-            <div class="resume">
-{safe_resume}
-            </div>
+            <p>
+            The corrected resume is ready.
+            </p>
 
-        </div>
+            <p>
+            <b>
+            The resume itself is hidden until you download it.
+            </b>
+            </p>
 
-        <div class="card">
-
-            <form action="/download-docx" method="post">
+            <form
+                action="/download-docx"
+                method="post"
+            >
 
                 <input
                     type="hidden"
@@ -937,13 +1221,18 @@ async def optimize(
                     value="{html.escape(encoded_resume)}"
                 >
 
-                <button type="submit">
-                    Download Corrected DOCX
+                <button
+                    class="download"
+                    type="submit"
+                >
+                    ⬇ Download Corrected Resume
                 </button>
 
             </form>
 
-            <br><br>
+        </div>
+
+        <div class="card">
 
             <a href="/">
                 Upload Another Resume
@@ -960,38 +1249,42 @@ async def optimize(
 
 
 # ============================================================
-# DOWNLOAD DOCX
+# DOWNLOAD
 # ============================================================
 
 @app.post("/download-docx")
-async def download_docx(resume_text: str = Form(...)):
-
-    import base64
+async def download_docx(
+    resume_text: str = Form(...)
+):
 
     try:
 
-        decoded = base64.b64decode(
+        corrected_text = base64.b64decode(
             resume_text
         ).decode("utf-8")
 
     except Exception:
 
-        decoded = resume_text
+        corrected_text = resume_text
 
-    document = create_docx(decoded)
+    document = create_docx(
+        corrected_text
+    )
 
     return StreamingResponse(
         document,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        media_type=
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
         headers={
             "Content-Disposition":
-            "attachment; filename=optimized_resume.docx"
+            "attachment; filename=Corrected_Resume.docx"
         }
     )
 
 
 # ============================================================
-# HEALTH CHECK
+# HEALTH
 # ============================================================
 
 @app.get("/health")
