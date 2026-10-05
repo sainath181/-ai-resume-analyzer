@@ -47,16 +47,12 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     miss = imp.difference(r_w)
     valid_miss = [s.title() if s.lower() not in ['sql', 'plc'] else s.upper() for s in miss if s.lower() in all_b]
     
-    # 🧠 Intelligent Section Separation Logic
-    languages_list = []
-    tools_list = []
-    
+    # 🧠 Intelligent Section Separation Mapping
+    languages_list, tools_list = [], []
     design_tools = {'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'scada', 'plc'}
     for s in valid_miss[:3]:
-        if s.lower() in design_tools:
-            tools_list.append(s)
-        else:
-            languages_list.append(s)
+        if s.lower() in design_tools: tools_list.append(s)
+        else: languages_list.append(s)
             
     inj_lang = ", " + ", ".join(languages_list) if languages_list else ""
     inj_tools = ", " + ", ".join(tools_list) if tools_list else ""
@@ -66,8 +62,6 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     if pct > 100: pct = 100
     m_str = ", ".join(list(match)[:10]).upper() if match else "NONE"
     
-    payload_str = f"{inj_lang}|||{inj_tools}"
-
     res = (
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
         '<style>@media screen { .resume-preview { display: none !important; } } @media print { .no-print { display: none !important; } .resume-preview { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
@@ -76,7 +70,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-6 mb-6 gap-4">'
         '<div><h2 class="text-xl font-black text-white tracking-wide uppercase">📊 ATS Optimization Matrix</h2>'
         f'<p class="text-xs text-slate-400 mt-1">Score: <span class="text-green-400 font-black">{pct}% Live Match</span> 🎉</p></div>'
-        '<button onclick="window.print()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition-all">🤖 DOWNLOAD PERFECT PDF</button>'
+        '<button onclick="window.print()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg">🤖 DOWNLOAD PERFECT PDF</button>'
         '</div><div class="space-y-4 mb-6">'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-green-400 uppercase tracking-widest">✔️ Verified Target Matches:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{m_str}</p></div>'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Section-Mapped Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{inj_str if inj_str else "NONE"}</p></div>'
@@ -94,3 +88,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '<li><strong>Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li></ul></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm"><div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div><ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light"><li>Developed and deployed a responsive web application.</li><li>Designed user-friendly interfaces and layouts.</li><li>Integrated database functionality for storing and retrieving data.</li><li>Performed testing and debugging to improve performance and usability.</li></ul></div></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">STRENGTHS</h2><p class="text-sm text-slate-700 font-light tracking-wide">• Quick Learner &bull; Team Player &bull; Communication Skills &bull; Problem Solving &bull; Adaptability &bull; Time Management</p></div>'
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">ACTIVITIES & INTERESTS</h2><ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-700 font-light"><li>Built and deployed a web application project.</li><li>Interested in learning modern web development technologies.</li><li>Watching Movies, Content Shooting, and Exploring New Technologies.</li></ul></div>'
+        '</div></body></html>'
+    )
+    return HTMLResponse(content=res, status_code=200)
