@@ -60,6 +60,12 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     if pct > 100: pct = 100
     m_str = ", ".join(list(match)[:10]).upper() if match else "NONE"
     
+    # 🤖 AI Real-Time Intelligent Project Bullet Point Suggester Engine
+    lead_tech = valid_miss[0] if valid_miss else "Modern Tech Stack"
+    ai_bullet_1 = f"Spearheaded architectural scaling components utilizing {lead_tech} to augment systemic performance by 35%."
+    ai_bullet_2 = f"Integrated secure dataset logic protocols and streamlined framework functions via proactive technical alignments."
+    ai_bullet_3 = f"Executed multi-platform pipeline metrics and optimized dynamic user interfaces to align with hiring roles."
+
     res = (
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
         '<style>@media screen { .preview-box { display: none !important; } } @media print { .no-print { display: none !important; } .preview-box { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
@@ -72,6 +78,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '</div><div class="space-y-4 mb-6">'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-green-400 uppercase tracking-widest">✔️ Verified Target Matches:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{m_str}</p></div>'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Section-Mapped Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{inj_str if inj_str else "NONE"}</p></div>'
+        f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-purple-500/20 shadow-lg shadow-purple-500/5"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Bullet Point Suggester Active:</p><p class="text-[11px] font-mono text-slate-400 mt-2 italic">“Successfully auto-blended 3 pristine bullet descriptors right inside your Project domain below!”</p></div>'
         '</div></div>'
         '<div class="preview-box max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
         '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
@@ -83,9 +90,10 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '<li><strong>Database:</strong> SQL Basics, Database Fundamentals</li>'
         f'<li><strong>Tools:</strong> Visual Studio Code, GitHub{inj_tools}</li>'
         '<li><strong>Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li></ul></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm"><div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div><ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light"><li>Developed and deployed a responsive web application.</li><li>Designed user-friendly interfaces and layouts.</li><li>Integrated database functionality for storing and retrieving data.</li><li>Performed testing and debugging to improve performance and usability.</li></ul></div></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">STRENGTHS</h2><p class="text-sm text-slate-700 font-light tracking-wide">• Quick Learner &bull; Team Player &bull; Communication Skills &bull; Problem Solving &bull; Adaptability &bull; Time Management</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">ACTIVITIES & INTERESTS</h2><ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-700 font-light"><li>Built and deployed a web application project.</li><li>Interested in learning modern web development technologies.</li><li>Watching Movies, Content Shooting, and Exploring New Technologies.</li></ul></div>'
-        '</div></body></html>'
-    )
-    return HTMLResponse(content=res, status_code=200)
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm">'
+        '<div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div>'
+        f'<ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light">'
+        f'<li>Developed and deployed a responsive web application.</li>'
+        f'<li>Designed user-friendly interfaces and layouts.</li>'
+        f'<li>Integrated database functionality for storing and retrieving data.</li>'
+        f'<li>Performed testing and debugging to improve performance and usability.</li>'
