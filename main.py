@@ -29,7 +29,7 @@ async def read_item():
         '<label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">1. Upload Candidate Resume (PDF)</label>'
         '<input type="file" name="resume" accept=".pdf" required class="block w-full text-xs text-slate-400 cursor-pointer"></div>'
         '<div class="space-y-2"><label class="block text-xs font-black text-slate-300 uppercase tracking-widest">2. Paste Custom Job Description (JD)</label>'
-        '<textarea name="jd" rows="5" placeholder="Paste company criteria or keywords like python, react, node, autocad here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-sm font-light shadow-inner placeholder:text-slate-700"></textarea></div>'
+        '<textarea name="jd" rows="5" placeholder="Paste company criteria or keywords like python, typescript, react, node, autocad here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-sm font-light shadow-inner placeholder:text-slate-700"></textarea></div>'
         '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all duration-300 hover:scale-[1.01]">Optimize Profile State</button>'
         '</form></div></body></html>'
     )
@@ -41,15 +41,16 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     txt = fix_spelling(extract_text_from_pdf(contents))
     j_w, r_w = set(re.findall(r'\b\w+\b', jd.lower())), set(re.findall(r'\b\w+\b', txt.lower()))
     stop = {'and', 'the', 'is', 'in', 'to', 'of', 'for', 'with', 'a', 'an', 'on', 'that', 'this', 'as', 'by', 'at', 'from', 'it', 'or', 'be', 'are'}
-    all_b = {'python', 'java', 'javascript', 'react', 'node', 'sql', 'html', 'css', 'aws', 'git', 'github', 'c', 'cpp', 'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'plc', 'scada'}
+    
+    # 🎯 Added TypeScript, MongoDB, Express, Docker into global dictionary mapping matrix
+    all_b = {'python', 'java', 'javascript', 'typescript', 'react', 'node', 'express', 'mongodb', 'docker', 'sql', 'html', 'css', 'aws', 'git', 'github', 'c', 'cpp', 'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'plc', 'scada'}
     imp = {w for w in j_w if w in all_b or (len(w) > 2 and w not in stop)}
     match = imp.intersection(r_w)
     miss = imp.difference(r_w)
     valid_miss = [s.title() if s.lower() not in ['sql', 'plc'] else s.upper() for s in miss if s.lower() in all_b]
     
-    # 🧠 Intelligent Section Separation Mapping
     languages_list, tools_list = [], []
-    design_tools = {'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'scada', 'plc'}
+    design_tools = {'autocad', 'solidworks', 'ansys', 'revit', 'staad', 'scada', 'plc', 'docker'}
     for s in valid_miss[:3]:
         if s.lower() in design_tools: tools_list.append(s)
         else: languages_list.append(s)
@@ -70,11 +71,11 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-6 mb-6 gap-4">'
         '<div><h2 class="text-xl font-black text-white tracking-wide uppercase">📊 ATS Optimization Matrix</h2>'
         f'<p class="text-xs text-slate-400 mt-1">Score: <span class="text-green-400 font-black">{pct}% Live Match</span> 🎉</p></div>'
-        '<button onclick="window.print()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg">🤖 DOWNLOAD PERFECT PDF</button>'
+        '<button onclick="window.print()" class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-600/20 hover:scale-[1.02] transition-all">🤖 DOWNLOAD PERFECT PDF</button>'
         '</div><div class="space-y-4 mb-6">'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-green-400 uppercase tracking-widest">✔️ Verified Target Matches:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{m_str}</p></div>'
         f'<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">🤖 AI Section-Mapped Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">{inj_str if inj_str else "NONE"}</p></div>'
-        '</div><p class="text-[10px] text-slate-500 text-center font-light tracking-wide">💥 AI Framework Active: Section mapping matrices executed successfully.</p></div>'
+        '</div><p class="text-[10px] text-slate-500 text-center font-light tracking-wide">💥 AI Framework Active: Auto-detected casing format parameters natively.</p></div>'
         
         '<div class="resume-preview max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
         '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
@@ -88,7 +89,3 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '<li><strong>Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li></ul></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm"><div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div><ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light"><li>Developed and deployed a responsive web application.</li><li>Designed user-friendly interfaces and layouts.</li><li>Integrated database functionality for storing and retrieving data.</li><li>Performed testing and debugging to improve performance and usability.</li></ul></div></div>'
         '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">STRENGTHS</h2><p class="text-sm text-slate-700 font-light tracking-wide">• Quick Learner &bull; Team Player &bull; Communication Skills &bull; Problem Solving &bull; Adaptability &bull; Time Management</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">ACTIVITIES & INTERESTS</h2><ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-700 font-light"><li>Built and deployed a web application project.</li><li>Interested in learning modern web development technologies.</li><li>Watching Movies, Content Shooting, and Exploring New Technologies.</li></ul></div>'
-        '</div></body></html>'
-    )
-    return HTMLResponse(content=res, status_code=200)
