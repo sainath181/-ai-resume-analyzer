@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-pypdf
-requests
 python-multipart
-reportlab
+pypdf
+python-docx
