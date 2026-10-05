@@ -23,14 +23,14 @@ async def read_item():
         '<header class="text-center mb-8">'
         '<div class="inline-flex items-center bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-bold text-blue-400 mb-4 uppercase tracking-widest shadow-inner">⚡ Premium AI Executive Suite</div>'
         '<h1 class="text-4xl font-black text-white tracking-tight mb-2">Universal AI Resume Suite</h1>'
-        '<p class="text-slate-400 text-xs font-light tracking-wide">Supports all streams: ...</p></header>'
+        '<p class="text-slate-400 text-xs font-light tracking-wide">Supports all streams: CSE, IT, ME, CE, ECE, EEE</p></header>'
         '<form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">'
         '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all duration-300 shadow-inner">'
         '<label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">1. Upload Candidate Resume (PDF)</label>'
         '<input type="file" name="resume" accept=".pdf" required class="block w-full text-xs text-slate-400 cursor-pointer"></div>'
         '<div class="space-y-2"><label class="block text-xs font-black text-slate-300 uppercase tracking-widest">2. Paste Custom Job Description (JD)</label>'
-        '<textarea name="jd" rows="5" placeholder="Paste skills here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none text-sm font-light"></textarea></div>'
-        '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all">Optimize Profile State</button>'
+        '<textarea name="jd" rows="5" placeholder="Paste company criteria or keywords like python, typescript, react, node, autocad here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-sm font-light shadow-inner placeholder:text-slate-700"></textarea></div>'
+        '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all duration-300 hover:scale-[1.01]">Optimize Profile State</button>'
         '</form></div></body></html>'
     )
     return HTMLResponse(content=h, status_code=200)
@@ -60,10 +60,13 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
     if pct > 100: pct = 100
     m_str = ", ".join(list(match)[:10]).upper() if match else "NONE"
     
-    lead_tech = inj_str if inj_str else "Modern Tech Stack"
-    b1 = "Spearheaded architectural scaling components utilizing " + lead_tech + " to augment systemic performance by 35%."
-    b2 = "Integrated secure dataset logic protocols and streamlined framework functions via proactive technical alignments."
-    b3 = "Executed multi-platform pipeline metrics and optimized dynamic user interfaces to align with hiring roles."
+    cse_injected_skills = ", ".join(languages_list) if languages_list else ""
+    if not cse_injected_skills.strip():
+        cse_injected_skills = "Modern Software Architectures"
+        
+    b1 = "Spearheaded architectural scaling components utilizing " + cse_injected_skills + " to augment systemic performance by 35%."
+    b2 = "Integrated secure database dataset parameters and streamlined API server routes natively within production bounds."
+    b3 = "Executed multi-platform pipeline metrics and optimized responsive front-end user dashboards to align with targets."
     
     res = (
         '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
@@ -81,10 +84,11 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         '</div></div>'
         '<div class="preview-box max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
         '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">CAREER OBJECTIVE</h2><p class="text-sm text-slate-700 leading-relaxed">Engineering student seeking Web Developer position.</p></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">EDUCATION</h2><div class="flex justify-between text-sm"><div><p class="font-bold text-slate-800">B.Tech - Computer Science and Engineering</p><p class="text-slate-600">Narayana Engineering College, Gudur</p></div><p class="font-semibold text-blue-800">CGPA: 7.8/10</p></div></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">TECHNICAL SKILLS</h2><ul class="space-y-1.5 text-sm text-slate-700"><li><strong>Programming Languages:</strong> C, Java' + inj_lang + '</li><li><strong>Web Technologies:</strong> HTML, CSS, JavaScript</li><li><strong>Tools:</strong> VS Code, GitHub' + inj_tools + '</li></ul></div>'
-        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm"><p class="font-semibold">Web Application Project</p><ul class="list-disc pl-5 mt-2 space-y-1"><li>Developed a responsive web application.</li><li><strong>[AI Suggestion]</strong> ' + b1 + '</li><li><strong>[AI Suggestion]</strong> ' + b2 + '</li><li><strong>[AI Suggestion]</strong> ' + b3 + '</li></ul></div></div>'
-        '</div></body></html>'
-    )
-    return HTMLResponse(content=res, status_code=200)
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">CAREER OBJECTIVE</h2><p class="text-sm text-slate-700 leading-relaxed">Computer Science Engineering student seeking an entry-level Web Developer position. Eager to apply programming knowledge, web development fundamentals, and problem-solving skills while learning from industry professionals.</p></div>'
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">EDUCATION</h2><div class="flex justify-between text-sm"><div><p class="font-bold text-slate-800">B.Tech - Computer Science and Engineering</p><p class="text-slate-600">Narayana Engineering College, Gudur</p></div><p class="font-semibold text-blue-800">CGPA: 7.8/10 (78%) | Current Year: 4-1</p></div></div>'
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">TECHNICAL SKILLS</h2><ul class="space-y-1.5 text-sm text-slate-700"><li><strong>Programming Languages:</strong> C, Java' + inj_lang + '</li><li><strong>Web Technologies:</strong> HTML, CSS, JavaScript (Basics)</li><li><strong>Database:</strong> SQL Basics, Database Fundamentals</li><li><strong>Tools:</strong> Visual Studio Code, GitHub' + inj_tools + '</li><li><strong>Core Concepts:</strong> OOP, Programming Fundamentals, Problem Solving</li></ul></div>'
+        '<div class="mb-6"><h2 class="text-sm font-bold text-blue-900 uppercase mb-2 tracking-wide">PROJECT</h2><div class="text-sm"><div class="flex justify-between font-semibold text-slate-800"><p>Web Application Development Project</p><p class="text-blue-600">https://netlify.app</p></div><ul class="list-disc pl-5 mt-2 space-y-1.5 text-slate-700 font-light"><li>Developed and deployed a responsive web application.</li><li>Designed user-friendly interfaces and layouts.</li><li>Integrated database functionality for storing and retrieving data.</li><li>Performed testing and debugging to improve performance and usability.</li>'
+        
+        # 🎯 Clean Native Blending: [AI Suggestion] label completely deleted for professional standard!
+        '<li>' + b1 + '</li>'
+        '<li>' + b2 + '</li>'
