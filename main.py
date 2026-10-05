@@ -1,4 +1,3 @@
-```python
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
 import pypdf
@@ -10,21 +9,21 @@ app = FastAPI(title="Universal AI Resume Suite")
 
 
 # ============================================================
-# PDF TEXT EXTRACTION
+# RESUME PDF TEXT EXTRACTION
 # ============================================================
 
 def extract_text_from_pdf(file_bytes):
     reader = pypdf.PdfReader(io.BytesIO(file_bytes))
 
-    pages = []
+    text = []
 
     for page in reader.pages:
         try:
-            pages.append(page.extract_text() or "")
+            text.append(page.extract_text() or "")
         except Exception:
-            pages.append("")
+            text.append("")
 
-    return "\n".join(pages)
+    return "\n".join(text)
 
 
 # ============================================================
@@ -50,7 +49,7 @@ def fix_spelling(text):
             r"\b" + re.escape(wrong) + r"\b",
             correct,
             text,
-            flags=re.IGNORECASE,
+            flags=re.IGNORECASE
         )
 
     return text
@@ -61,11 +60,16 @@ def fix_spelling(text):
 # ============================================================
 
 def get_words(text):
-    return set(re.findall(r"\b[a-zA-Z][a-zA-Z0-9+#.-]*\b", text.lower()))
+    return set(
+        re.findall(
+            r"\b[a-zA-Z][a-zA-Z0-9+#.-]*\b",
+            text.lower()
+        )
+    )
 
 
 # ============================================================
-# SKILLS DATABASE
+# UNIVERSAL SKILLS DATABASE
 # ============================================================
 
 SKILLS = {
@@ -76,7 +80,6 @@ SKILLS = {
     "typescript",
     "c",
     "cpp",
-    "c++",
     "csharp",
     "sql",
     "html",
@@ -88,7 +91,7 @@ SKILLS = {
     "kotlin",
     "swift",
 
-    # Web
+    # Web Development
     "react",
     "angular",
     "vue",
@@ -101,7 +104,7 @@ SKILLS = {
     "bootstrap",
     "tailwind",
 
-    # Database
+    # Databases
     "mysql",
     "postgresql",
     "mongodb",
@@ -252,15 +255,15 @@ async def home():
 
 <div class="max-w-xl w-full bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl">
 
-<header class="text-center mb-8">
+<div class="text-center mb-8">
 
-<div class="inline-flex items-center bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full text-xs font-bold text-blue-400 mb-5 uppercase tracking-widest">
+<div class="inline-block bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full text-xs font-bold text-blue-400 mb-5 uppercase tracking-widest">
 
 Premium AI Executive Suite
 
 </div>
 
-<h1 class="text-4xl font-black text-white tracking-tight mb-3">
+<h1 class="text-4xl font-black text-white mb-3">
 
 Universal AI Resume Suite
 
@@ -278,10 +281,15 @@ Supports B.Tech, M.Tech, MCA, MBA, Pharmacy, Pharm.D and multiple career streams
 
 </p>
 
-</header>
+</div>
 
 
-<form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">
+<form
+action="/upload-resume/"
+method="post"
+enctype="multipart/form-data"
+class="space-y-6"
+>
 
 
 <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
@@ -313,7 +321,7 @@ Only PDF files are supported.
 
 <label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">
 
-2. Paste Job Description
+2. Paste Custom Job Description
 
 </label>
 
@@ -337,6 +345,7 @@ Optimize Profile State
 
 </button>
 
+
 </form>
 
 </div>
@@ -344,13 +353,14 @@ Optimize Profile State
 </div>
 
 </body>
+
 </html>
 """
     )
 
 
 # ============================================================
-# RESUME ANALYZER
+# RESUME ANALYSIS
 # ============================================================
 
 @app.post("/upload-resume/", response_class=HTMLResponse)
@@ -360,18 +370,27 @@ async def upload_resume(
 ):
 
     # --------------------------------------------------------
-    # Validate file
+    # Validate upload
     # --------------------------------------------------------
 
     if not resume.filename:
+
         return HTMLResponse(
-            "<h1>No resume uploaded.</h1>",
+            """
+            <h1>No resume uploaded.</h1>
+            <a href="/">Go Back</a>
+            """,
             status_code=400
         )
 
+
     if not resume.filename.lower().endswith(".pdf"):
+
         return HTMLResponse(
-            "<h1>Please upload a PDF resume.</h1>",
+            """
+            <h1>Please upload a PDF resume.</h1>
+            <a href="/">Go Back</a>
+            """,
             status_code=400
         )
 
@@ -383,21 +402,32 @@ async def upload_resume(
     contents = await resume.read()
 
     try:
+
         resume_text = extract_text_from_pdf(contents)
-    except Exception as e:
+
+    except Exception as error:
+
         return HTMLResponse(
             f"""
             <html>
             <body style="font-family:Arial;padding:40px">
-            <h1>Unable to read PDF</h1>
-            <p>{html.escape(str(e))}</p>
+
+            <h1>PDF Reading Error</h1>
+
+            <p>{html.escape(str(error))}</p>
+
             <a href="/">Go Back</a>
+
             </body>
             </html>
             """,
             status_code=400
         )
 
+
+    # --------------------------------------------------------
+    # Empty PDF check
+    # --------------------------------------------------------
 
     if not resume_text.strip():
 
@@ -406,11 +436,11 @@ async def upload_resume(
             <html>
             <body style="font-family:Arial;padding:40px">
 
-            <h1>Could not extract text from this PDF.</h1>
+            <h1>Could not extract text from your PDF.</h1>
 
             <p>
-            Your PDF may be scanned/image-based.
-            Please upload a text-based PDF for now.
+            This may be a scanned/image-based PDF.
+            Please upload a text-based PDF.
             </p>
 
             <a href="/">Go Back</a>
@@ -423,7 +453,7 @@ async def upload_resume(
 
 
     # --------------------------------------------------------
-    # Clean text
+    # Clean resume
     # --------------------------------------------------------
 
     resume_text = fix_spelling(resume_text)
@@ -431,11 +461,12 @@ async def upload_resume(
     jd = jd.strip()
 
     resume_words = get_words(resume_text)
+
     jd_words = get_words(jd)
 
 
     # --------------------------------------------------------
-    # Identify job skills
+    # Find skills from job description
     # --------------------------------------------------------
 
     required_skills = set()
@@ -443,27 +474,25 @@ async def upload_resume(
     for word in jd_words:
 
         if word in SKILLS:
+
             required_skills.add(word)
 
-    # Extra meaningful words from JD
-    meaningful_words = {
-        word
-        for word in jd_words
-        if len(word) > 2 and word not in STOP_WORDS
-    }
+
+    # --------------------------------------------------------
+    # Match skills
+    # --------------------------------------------------------
+
+    matched_skills = required_skills.intersection(
+        resume_words
+    )
+
+    missing_skills = required_skills.difference(
+        resume_words
+    )
 
 
     # --------------------------------------------------------
-    # Matching
-    # --------------------------------------------------------
-
-    matched_skills = required_skills.intersection(resume_words)
-
-    missing_skills = required_skills.difference(resume_words)
-
-
-    # --------------------------------------------------------
-    # If JD contains no recognized skills
+    # Calculate skill score
     # --------------------------------------------------------
 
     if required_skills:
@@ -475,13 +504,24 @@ async def upload_resume(
 
     else:
 
-        matching_words = meaningful_words.intersection(resume_words)
+        meaningful_jd_words = {
+            word
+            for word in jd_words
+            if len(word) > 2
+            and word not in STOP_WORDS
+        }
 
-        if meaningful_words:
+        matching_words = (
+            meaningful_jd_words.intersection(
+                resume_words
+            )
+        )
+
+        if meaningful_jd_words:
 
             skill_score = (
                 len(matching_words) /
-                len(meaningful_words)
+                len(meaningful_jd_words)
             ) * 100
 
         else:
@@ -489,27 +529,59 @@ async def upload_resume(
             skill_score = 100
 
 
-    skill_score = max(0, min(100, int(skill_score)))
+    skill_score = max(
+        0,
+        min(100, int(skill_score))
+    )
 
 
     # --------------------------------------------------------
-    # General resume checks
+    # Resume sections
     # --------------------------------------------------------
 
     sections = {
-        "Education": ["education", "qualification", "academic"],
-        "Experience": ["experience", "employment", "work history"],
-        "Projects": ["projects", "project"],
-        "Skills": ["skills", "technical skills"],
-        "Contact": ["email", "phone", "mobile"],
+
+        "Education": [
+            "education",
+            "qualification",
+            "academic"
+        ],
+
+        "Experience": [
+            "experience",
+            "employment",
+            "work history"
+        ],
+
+        "Projects": [
+            "projects",
+            "project"
+        ],
+
+        "Skills": [
+            "skills",
+            "technical skills"
+        ],
+
+        "Contact": [
+            "email",
+            "phone",
+            "mobile"
+        ],
+
     }
 
 
     section_score = 0
 
+    lower_resume = resume_text.lower()
+
     for keywords in sections.values():
 
-        if any(keyword in resume_text.lower() for keyword in keywords):
+        if any(
+            keyword in lower_resume
+            for keyword in keywords
+        ):
 
             section_score += 1
 
@@ -520,7 +592,7 @@ async def upload_resume(
 
 
     # --------------------------------------------------------
-    # Final ATS score
+    # Overall ATS score
     # --------------------------------------------------------
 
     final_score = int(
@@ -528,12 +600,14 @@ async def upload_resume(
         (section_percentage * 0.30)
     )
 
-
-    final_score = max(0, min(100, final_score))
+    final_score = max(
+        0,
+        min(100, final_score)
+    )
 
 
     # --------------------------------------------------------
-    # Display values
+    # Display skills
     # --------------------------------------------------------
 
     matched_display = ", ".join(
@@ -541,6 +615,7 @@ async def upload_resume(
     )
 
     if not matched_display:
+
         matched_display = "No direct skill matches found."
 
 
@@ -549,7 +624,10 @@ async def upload_resume(
     )
 
     if not missing_display:
-        missing_display = "Excellent — no major recognized skills are missing."
+
+        missing_display = (
+            "Excellent - no major recognized skills are missing."
+        )
 
 
     # --------------------------------------------------------
@@ -558,25 +636,30 @@ async def upload_resume(
 
     recommendations = []
 
-    if missing_skills:
 
-        for skill in sorted(missing_skills)[:5]:
+    for skill in sorted(missing_skills)[:5]:
 
-            recommendations.append(
-                f"Consider adding genuine experience or projects involving {skill}."
-            )
+        recommendations.append(
+            "If you genuinely have this skill, "
+            f"consider adding relevant {skill} experience or projects."
+        )
+
 
     if section_score < 5:
 
         recommendations.append(
-            "Make sure your resume contains clear Education, Experience, Projects, Skills and Contact sections."
+            "Make sure your resume contains clear "
+            "Education, Experience, Projects, Skills and Contact sections."
         )
 
-    if "summary" not in resume_text.lower():
+
+    if "summary" not in lower_resume:
 
         recommendations.append(
-            "Consider adding a short professional summary targeted toward the job."
+            "Consider adding a short professional summary "
+            "targeted toward the job."
         )
+
 
     if not recommendations:
 
@@ -586,14 +669,14 @@ async def upload_resume(
 
 
     # --------------------------------------------------------
-    # AI-style project suggestions
+    # Project recommendation
     # --------------------------------------------------------
 
     if "python" in required_skills:
 
         project_suggestion = (
-            "Build a Python-based application demonstrating "
-            "Python, APIs, databases and real-world problem solving."
+            "Build a Python application using APIs, "
+            "database integration and real-world problem solving."
         )
 
     elif "java" in required_skills:
@@ -606,48 +689,57 @@ async def upload_resume(
     elif "react" in required_skills:
 
         project_suggestion = (
-            "Build a responsive React application connected "
+            "Build a React application connected "
             "to a backend API and database."
         )
 
-    elif "machine" in required_skills or "learning" in required_skills:
+    elif (
+        "machine" in required_skills
+        or "learning" in required_skills
+    ):
 
         project_suggestion = (
             "Build an end-to-end machine learning project "
-            "including data preparation, model training and evaluation."
+            "with data preparation, model training and evaluation."
         )
 
     else:
 
         project_suggestion = (
-            "Build a practical project that demonstrates the "
-            "most important skills mentioned in the job description."
+            "Build a practical project demonstrating "
+            "the main skills mentioned in the job description."
         )
 
 
     # --------------------------------------------------------
-    # Safe HTML
+    # HTML-safe values
     # --------------------------------------------------------
 
-    safe_filename = html.escape(resume.filename)
+    safe_filename = html.escape(
+        resume.filename
+    )
 
-    matched_html = html.escape(matched_display)
+    safe_matched = html.escape(
+        matched_display
+    )
 
-    missing_html = html.escape(missing_display)
+    safe_missing = html.escape(
+        missing_display
+    )
 
-    recommendations_html = ""
+    recommendation_html = ""
 
-    for item in recommendations:
+    for recommendation in recommendations:
 
-        recommendations_html += (
-            "<li class='mb-2'>"
-            + html.escape(item)
+        recommendation_html += (
+            "<li class='mb-3'>"
+            + html.escape(recommendation)
             + "</li>"
         )
 
 
     # --------------------------------------------------------
-    # RESULT PAGE
+    # RESULTS PAGE
     # --------------------------------------------------------
 
     result_html = f"""
@@ -661,7 +753,7 @@ async def upload_resume(
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>AI Resume Analysis</title>
+<title>AI Resume Analysis Results</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -675,11 +767,12 @@ async def upload_resume(
 
     body {{
         background: white !important;
+        color: black !important;
     }}
 
-    .print-card {{
+    .card {{
         box-shadow: none !important;
-        border: none !important;
+        border: 1px solid #ddd !important;
     }}
 
 }}
@@ -699,9 +792,9 @@ async def upload_resume(
 
 <div class="text-center mb-8 no-print">
 
-<div class="inline-block bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">
+<div class="inline-block bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-full text-xs font-bold text-blue-400 mb-4 uppercase tracking-widest">
 
-AI Resume Analyzer
+Universal AI Resume Suite
 
 </div>
 
@@ -713,16 +806,16 @@ ATS Optimization Results
 
 <p class="text-slate-400 mt-2">
 
-Analysis completed successfully
+Your resume has been analyzed against the job description.
 
 </p>
 
 </div>
 
 
-<!-- SCORE -->
+<!-- SCORE CARD -->
 
-<div class="print-card bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl mb-6">
+<div class="card bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl mb-6">
 
 
 <div class="text-center">
@@ -733,15 +826,17 @@ Overall ATS Score
 
 </p>
 
+
 <div class="text-7xl font-black text-blue-400 mt-3">
 
 {final_score}%
 
 </div>
 
+
 <p class="text-sm text-slate-400 mt-3">
 
-Job compatibility score
+Estimated job compatibility
 
 </p>
 
@@ -761,7 +856,7 @@ Skill Match
 
 <p class="text-3xl font-black text-green-400 mt-2">
 
-{int(skill_score)}%
+{skill_score}%
 
 </p>
 
@@ -792,7 +887,7 @@ Resume Structure
 
 <!-- MATCHED SKILLS -->
 
-<div class="print-card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
+<div class="card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
 
 <h2 class="text-lg font-black text-green-400 uppercase tracking-wider">
 
@@ -802,7 +897,7 @@ Matched Skills
 
 <p class="text-slate-300 mt-4 leading-relaxed">
 
-{matched_html}
+{safe_matched}
 
 </p>
 
@@ -811,7 +906,7 @@ Matched Skills
 
 <!-- MISSING SKILLS -->
 
-<div class="print-card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
+<div class="card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
 
 <h2 class="text-lg font-black text-red-400 uppercase tracking-wider">
 
@@ -821,26 +916,26 @@ Missing / Recommended Skills
 
 <p class="text-slate-300 mt-4 leading-relaxed">
 
-{missing_html}
+{safe_missing}
 
 </p>
 
 </div>
 
 
-<!-- RECOMMENDATIONS -->
+<!-- AI RECOMMENDATIONS -->
 
-<div class="print-card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
+<div class="card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
 
 <h2 class="text-lg font-black text-purple-400 uppercase tracking-wider">
 
-AI Recommendations
+AI Resume Recommendations
 
 </h2>
 
 <ul class="list-disc list-inside text-slate-300 mt-5 leading-relaxed">
 
-{recommendations_html}
+{recommendation_html}
 
 </ul>
 
@@ -849,7 +944,7 @@ AI Recommendations
 
 <!-- PROJECT -->
 
-<div class="print-card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
+<div class="card bg-slate-900/80 border border-slate-800 rounded-3xl p-7 shadow-xl mb-6">
 
 <h2 class="text-lg font-black text-blue-400 uppercase tracking-wider">
 
@@ -875,9 +970,10 @@ Analyzed Resume: {safe_filename}
 </div>
 
 
-<!-- BUTTONS -->
+<!-- ACTION BUTTONS -->
 
 <div class="flex flex-col sm:flex-row gap-4 justify-center no-print">
+
 
 <button
 onclick="window.print()"
@@ -898,10 +994,12 @@ Analyze Another Resume
 
 </a>
 
+
 </div>
 
 
 </div>
+
 
 </body>
 
@@ -926,4 +1024,3 @@ async def health():
         "status": "running",
         "project": "Universal AI Resume Suite"
     }
-```
