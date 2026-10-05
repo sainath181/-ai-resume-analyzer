@@ -23,14 +23,14 @@ async def read_item():
         '<header class="text-center mb-8">'
         '<div class="inline-flex items-center bg-blue-500/10 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-bold text-blue-400 mb-4 uppercase tracking-widest">Premium AI Executive Suite</div>'
         '<h1 class="text-4xl font-black text-white tracking-tight mb-2">Universal AI Resume Suite</h1>'
-        '<p class="text-slate-400 text-xs font-light">Supports all Streams & Degrees: B.Tech, M.Tech, MBA, MCA, Pharmacy, Pharm.D</p></header>'
+        '<p class="text-slate-400 text-xs font-light">Supports all Streams and Degrees: B.Tech, M.Tech, MBA, MCA, Pharmacy, Pharm.D</p></header>'
         '<form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">'
-        '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all shadow-inner">'
+        '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all duration-300 shadow-inner">'
         '<label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">1. Upload Candidate Resume (PDF)</label>'
         '<input type="file" name="resume" accept=".pdf" required class="block w-full text-xs text-slate-400 cursor-pointer"></div>'
         '<div class="space-y-2"><label class="block text-xs font-black text-slate-300 uppercase tracking-widest">2. Paste Custom Job Description (JD)</label>'
         '<textarea name="jd" rows="5" placeholder="Paste company criteria here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none text-sm font-light shadow-inner"></textarea></div>'
-        '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all">Optimize Profile State</button>'
+        '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all">Optimize Profile State</button>'
         '</form></div></body></html>'
     )
     return HTMLResponse(content=h, status_code=200)
@@ -87,8 +87,7 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         b2 = "Integrated secure database dataset parameters and streamlined server/system components natively within production bounds."
         b3 = "Executed multi-platform pipeline metrics and optimized responsive front-end user dashboards to align with targets."
 
-    # 🎯 Pure Standard Concatenation Method: Completely erases f-string curly brace parsing conflicts!
-    # Erased the '[AI Suggestion]' heading tags natively for pristine executive output standard!
+    # 🎯 Micro-Concatenation Stream: Immune to white screens and line-cutting compilation errors forever!
     res = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
     res += '<style>@media screen { .resume-preview { display: none !important; } } @media print { .no-print { display: none !important; } .resume-preview { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
     res += '<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-black text-gray-100 min-h-screen p-4 flex items-center justify-center font-sans">'
