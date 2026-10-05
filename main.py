@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
-import pypdf, io, re, base64
+import pypdf, io, re
 
 app = FastAPI()
 
@@ -25,11 +25,11 @@ async def read_item():
         '<h1 class="text-4xl font-black text-white tracking-tight mb-2">Universal AI Resume Suite</h1>'
         '<p class="text-slate-400 text-xs font-light">Supports all Streams & Degrees: B.Tech, M.Tech, MBA, MCA, Pharmacy, Pharm.D</p></header>'
         '<form action="/upload-resume/" method="post" enctype="multipart/form-data" class="space-y-6">'
-        '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all duration-300 shadow-inner">'
+        '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 hover:border-blue-500/40 transition-all shadow-inner">'
         '<label class="block text-xs font-black text-slate-300 uppercase tracking-widest mb-3">1. Upload Candidate Resume (PDF)</label>'
         '<input type="file" name="resume" accept=".pdf" required class="block w-full text-xs text-slate-400 cursor-pointer"></div>'
         '<div class="space-y-2"><label class="block text-xs font-black text-slate-300 uppercase tracking-widest">2. Paste Custom Job Description (JD)</label>'
-        '<textarea name="jd" rows="5" placeholder="Paste company criteria here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none text-sm font-light shadow-inner"></textarea></div>'
+        '<textarea name="jd" rows="5" placeholder="Paste criteria here..." required class="w-full bg-slate-950/80 text-slate-200 p-4 rounded-2xl border border-slate-800 focus:outline-none text-sm font-light shadow-inner"></textarea></div>'
         '<button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-extrabold py-4 rounded-2xl shadow-xl tracking-widest text-xs uppercase transition-all">Optimize Profile State</button>'
         '</form></div></body></html>'
     )
@@ -87,6 +87,17 @@ async def upload_resume(resume: UploadFile = File(...), jd: str = Form(...)):
         b2 = "Integrated secure database dataset parameters and streamlined server/system components natively within production bounds."
         b3 = "Executed multi-platform pipeline metrics and optimized responsive front-end user dashboards to align with targets."
 
-    # 🎯 Ultimate Absolute Base64 Secure Result Payload System
-    # 100% immune to browser layout engines, github cuts, and f-string curly brace parsing conflicts!
-    # Erased the '[AI Suggestion]' heading tags natively for pristine executive output standard!
+    # 🎯 Pure Safe Dynamic Concatenation Stream: Immune to 'Analyze' white screens forever!
+    # All complex braces formatting are handled entirely via isolated string additions!
+    res = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://tailwindcss.com"></script>'
+    res += '<style>@media screen { .resume-preview { display: none !important; } } @media print { .no-print { display: none !important; } .resume-preview { display: block !important; background: white !important; color: black !important; padding: 0 !important; } body { background: white; } }</style></head>'
+    res += '<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-black text-gray-100 min-h-screen p-4 flex items-center justify-center font-sans">'
+    res += '<div class="max-w-2xl w-full bg-slate-900/40 backdrop-blur-2xl p-8 rounded-3xl border border-slate-800 shadow-2xl no-print">'
+    res += '<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/80 pb-4 mb-4 gap-4">'
+    res += '<div><h2 class="text-xl font-black text-white tracking-wide uppercase">ATS Optimization Matrix</h2>'
+    res += '<p class="text-xs text-green-400 font-black">' + str(pct) + '% Live Match</p></div>'
+    res += '<button onclick="window.print()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg">DOWNLOAD PERFECT PDF</button></div>'
+    res += '<div class="space-y-4 mb-6"><div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-green-400 uppercase tracking-widest">Verified Target Matches:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">' + m_str + '</p></div>'
+    res += '<div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 shadow-inner"><p class="text-xs font-black text-purple-400 uppercase tracking-widest">AI Section-Mapped Injected Skills:</p><p class="text-xs font-mono text-slate-300 mt-2 leading-relaxed">' + inj_str + '</p></div></div></div>'
+    res += '<div class="resume-preview max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">'
+    res += '<div class="border-b-4 border-blue-900 pb-4 mb-6"><h1 class="text-3xl font-black text-slate-900">G. SAINATH</h1><p class="text-sm text-slate-600 mt-1">Gudur, Andhra Pradesh | 9014882483 | gsainathroyal73212@gmail.com</p></div>'
